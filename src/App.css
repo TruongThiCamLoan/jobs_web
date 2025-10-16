@@ -1,38 +1,264 @@
-.App {
+body {
+  font-family: Arial, sans-serif;
+  margin: 0;
+  background: #f4f6f8;
+  color: #333;
+}
+
+.top-bar {
+  background-color: #6c7ee1;
+  color: #fff;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 5px 20px;
+  font-size: 14px;
+}
+
+.top-bar span {
+  margin-right: 15px;
+}
+
+.top-bar-right {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.top-bar a {
+  color: #fff;
+  text-decoration: none;
+  font-weight: 500;
+}
+
+.btn-employer {
+  background-color: #ffb300;
+  color: #000;
+  padding: 5px 10px;
+  border-radius: 4px;
+  font-weight: bold;
+}
+
+.btn-employer:hover {
+  background-color: #ffca28;
+}
+
+.search-bar-top {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  gap: 10px;
+  padding: 15px 20px;
+  background-color: #f0f4f8;
+  box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+}
+
+.search-bar-top input,
+.search-bar-top select {
+  padding: 8px 12px;
+  font-size: 14px;
+  border: 1px solid #ccc;
+  border-radius: 4px;
+}
+
+.search-bar-top button {
+  background-color: #0077cc;
+  color: white;
+  border: none;
+  padding: 9px 18px;
+  font-size: 14px;
+  border-radius: 4px;
+  cursor: pointer;
+  transition: background-color 0.3s ease;
+}
+
+.search-bar-top button:hover {
+  background-color: #005fa3;
+}
+
+.logo {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  z-index: 20; /* Đảm bảo logo luôn trên banner */
+  position: relative;
+}
+
+.logo h1 {
+  margin: 0;
+  font-size: 24px;
+}
+
+nav {
+  z-index: 20; /* Đảm bảo nav luôn trên banner */
+  position: relative;
+}
+
+nav a {
+  color: white;
+  text-decoration: none;
+  margin: 0 10px;
+  font-weight: bold;
+}
+
+nav a:hover {
+  text-decoration: underline;
+}
+
+.banner-slider {
+  position: relative;
+  width: 100%;
+  max-height: 400px;
+  overflow: hidden;
+}
+
+.banner-slider img {
+  width: 100%;
+  height: 400px;
+  object-fit: cover;
+  display: block;
+}
+
+/* Nút điều khiển banner */
+.banner-btn {
+  position: absolute;
+  top: 50%;
+  transform: translateY(-50%);
+  background-color: rgba(0,0,0,0.4);
+  border: none;
+  color: white;
+  font-size: 2.5rem;
+  padding: 0 12px;
+  cursor: pointer;
+  user-select: none;
+  border-radius: 3px;
+  transition: background-color 0.3s ease;
+  z-index: 10;
+}
+
+.banner-btn:hover {
+  background-color: rgba(0,0,0,0.7);
+}
+
+.banner-btn.left {
+  left: 15px;
+}
+
+.banner-btn.right {
+  right: 15px;
+}
+
+footer {
+  background: #222;
+  color: white;
   text-align: center;
+  padding: 10px;
+  margin-top: 40px;
 }
 
-.App-logo {
-  height: 40vmin;
-  pointer-events: none;
+/* Phần sửa cho header và banner nền */
+
+.header-with-banner {
+  position: relative;
+  z-index: 20; /* Luôn nằm trên banner */
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 15px 20px;
+  color: white;
+  flex-wrap: wrap;
 }
 
-@media (prefers-reduced-motion: no-preference) {
-  .App-logo {
-    animation: App-logo-spin infinite 20s linear;
-  }
+/* Banner nền cho header */
+.banner-overlay {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%; /* Chiếm toàn bộ header */
+  z-index: 10; /* Dưới header */
+  pointer-events: none; /* Không cản sự kiện chuột */
+  overflow: hidden;
+  border-radius: 0 0 10px 10px; /* Bo tròn góc dưới nếu muốn */
 }
 
-.App-header {
-  background-color: #282c34;
-  min-height: 100vh;
+.banner-overlay img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  display: block;
+  filter: brightness(0.6); /* Làm tối ảnh để chữ nổi bật hơn */
+}
+
+/* Để header nội dung (logo + nav) có nền trong suốt */
+.header-with-banner > * {
+  position: relative;
+  z-index: 20;
+}
+
+/*  ĐĂNG KÝ  */
+.register-card-container {
+  display: flex;
+  justify-content: center;
+  gap: 10px;
+  flex-wrap: nowrap;
+}
+
+.register-card {
+  width: 350px;
+  min-height: 350px;
+  padding: 20px;
+  border-radius: 10px;
+  box-shadow: 0 2px 15px rgba(0,0,0,0.15);
   display: flex;
   flex-direction: column;
-  align-items: center;
+  justify-content: space-between;
+  background-color: #fff;
+}
+
+.register-candidate {
+  border-left: 5px solid #007bff;
+}
+
+.register-employer {
+  border-left: 5px solid #f9b208;
+}
+
+/* Modal overlay */
+.modal-overlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  background: rgba(0,0,0,0.5);
+  display: flex;
   justify-content: center;
-  font-size: calc(10px + 2vmin);
-  color: white;
+  align-items: center;
+  z-index: 9999;
 }
 
-.App-link {
-  color: #61dafb;
+.modal-content {
+  background: #fff;
+  border-radius: 10px;
+  padding: 20px;
+  width: auto;
+  max-width: 800px;
 }
 
-@keyframes App-logo-spin {
-  from {
-    transform: rotate(0deg);
+/* Responsive */
+@media (max-width: 768px) {
+  .register-card-container {
+    flex-direction: column;
+    align-items: center;
   }
-  to {
-    transform: rotate(360deg);
+
+  .register-card {
+    width: 90%;
+    margin-bottom: 15px;
   }
 }
+
+
+
+
