@@ -1,0 +1,28 @@
+/* NAVBAR CHUNG */
+.avatar-circle {
+  width: 32px;
+  height: 32px;
+  border-radius: 50%;
+  background-color: #e9ecef;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: #6c757d;
+  font-size: 14px;
+}
+
+.user-dropdown .dropdown-menu {
+  min-width: 220px;
+}
+
+.whitespace-nowrap {
+  white-space: nowrap;
+}
+
+/* Ẩn menu trái trên MyJobs khi có search bar */
+@media (max-width: 992px) {
+  .navbar-collapse .me-auto {
+    display: none !important;
+  }
+}
+

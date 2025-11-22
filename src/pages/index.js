@@ -2,3 +2,25 @@ export { default as HomePage } from "./HomePage";
 export { default as LoginPage } from "./LoginPage";
 export { default as RegisterPage } from "./RegisterPage";
 export { default as LoginEmployerPage } from "./LoginEmployerPage";
+export { default as MyJobsPage } from "./MyJobsPage";
+export { default as ResumePage } from "./ResumePage";
+export { default as SavedJobsPage } from "./SavedJobsPage";
+export { default as JobAlertsPage } from "./JobAlertsPage";
+export { default as AppliedJobsPage } from "./AppliedJobsPage";
+
+export { default as CreateResumeStep1 } from "./CreateResumeStep1";
+export { default as CreateResumeStep2 } from "./CreateResumeStep2";
+export { default as CreateResumeStep3 } from "./CreateResumeStep3";
+export { default as CreateResumeStep4 } from "./CreateResumeStep4";
+export { default as CreateResumeStep5 } from "./CreateResumeStep5";
+export { default as CreateResumeStep6 } from "./CreateResumeStep6";
+export { default as CreateResumeStep7 } from "./CreateResumeStep7";
+export { default as CreateResumeStep8 } from "./CreateResumeStep8";
+export { default as CreateResumeStep9 } from "./CreateResumeStep9";
+
+export { default as AdminDashboard } from "./Admin/AdminDashboard";
+export { default as EmployersManagement } from "./Admin/EmployersManagement";
+export { default as StudentsManagement } from "./Admin/StudentsManagement";
+export { default as CategoryManagement } from "./Admin/CategoryManagement";
+export { default as ComplaintManagement } from "./Admin/ComplaintManagement";
+export { default as StatisticsReport } from "./Admin/StatisticsReport";

@@ -1,0 +1,523 @@
+/* Chrome, Safari, Edge, Opera */
+input[type=number]::-webkit-inner-spin-button,
+input[type=number]::-webkit-outer-spin-button {
+  -webkit-appearance: none;
+  margin: 0;
+}
+
+/* Firefox */
+input[type=number] {
+  -moz-appearance: textfield;
+}
+
+.card {
+  border-radius: 12px;
+}
+.btn-primary {
+  background-color: #2563eb;
+  border: none;
+}
+.btn-primary:hover {
+  background-color: #1e40af;
+}
+
+/* lịch sử mượn trả  */
+.react-datepicker__day.has-book-day {
+  background-color: gold !important;
+  color: black !important;
+  border-radius: 50% !important;
+}
+
+
+/*  admin */
+/* Sidebar style */
+.sidebar-custom {
+  width: 250px;
+  background: linear-gradient(180deg, #1a273f, #2a5298);
+  min-height: 100vh;
+  color: white;
+  font-family: 'Segoe UI', sans-serif;
+  box-shadow: 2px 0 5px rgba(0, 0, 0, 0.1);
+}
+
+/* Logo */
+.sidebar-logo {
+  width: 60px;
+  height: 60px;
+}
+
+/* Sidebar icons */
+.sidebar-custom .nav-item {
+  padding: 8px 12px;
+  border-radius: 8px;
+  transition: background 0.2s;
+}
+
+.sidebar-custom .nav-item:hover {
+  background-color: rgba(255, 255, 255, 0.1);
+  cursor: pointer;
+} 
+/* thêm sách  */
+.scrollable-table-wrapper {
+  width: 100%;
+  overflow-x: auto;
+}
+
+.scrollable-table-wrapper table {
+  min-width: 1200px;
+  white-space: nowrap;
+}
+
+body {
+  overflow-x: hidden;
+}
+/*  */
+
+/* Responsive cho trang đặt trước sách */
+
+/* Mobile styles */
+@media (max-width: 767.98px) {
+  .table-responsive {
+    font-size: 0.875rem;
+  }
+  
+  .table td, .table th {
+    padding: 0.5rem 0.25rem;
+  }
+  
+  .btn-sm {
+    padding: 0.25rem 0.5rem;
+    font-size: 0.75rem;
+  }
+  
+  .badge {
+    font-size: 0.7rem;
+  }
+  
+  .pagination-sm .page-link {
+    padding: 0.25rem 0.5rem;
+    font-size: 0.875rem;
+  }
+  
+  /* Ẩn một số cột trên mobile */
+  .d-none.d-md-table-cell {
+    display: none !important;
+  }
+  
+  .d-none.d-lg-table-cell {
+    display: none !important;
+  }
+  
+  /* Hiển thị thông tin bổ sung trong cell */
+  .small.text-muted {
+    font-size: 0.75rem;
+    margin-top: 0.25rem;
+  }
+  
+  /* Tabs responsive */
+  .btn-group-vertical .btn {
+    margin-bottom: 0.25rem;
+  }
+  
+  /* Search box full width trên mobile */
+  .w-100.w-md-auto {
+    width: 100% !important;
+  }
+}
+
+/* Tablet styles */
+@media (min-width: 768px) and (max-width: 991.98px) {
+  .table-responsive {
+    font-size: 0.9rem;
+  }
+  
+  .d-none.d-lg-table-cell {
+    display: none !important;
+  }
+  
+  /* Hiển thị một số thông tin trong cell */
+  .d-lg-none.small.text-muted {
+    display: none !important;
+  }
+}
+
+/* Desktop styles */
+@media (min-width: 992px) {
+  .table-responsive {
+    font-size: 1rem;
+  }
+  
+  .d-lg-none.small.text-muted {
+    display: none !important;
+  }
+}
+
+/* Hover effects cho desktop */
+@media (min-width: 768px) {
+  .table-hover tbody tr:hover {
+    background-color: rgba(0, 0, 0, 0.075);
+  }
+  
+  .btn:hover {
+    transform: translateY(-1px);
+    transition: transform 0.2s ease;
+  }
+}
+
+/* Loading spinner responsive */
+@media (max-width: 767.98px) {
+  .spinner-border {
+    width: 2rem;
+    height: 2rem;
+  }
+}
+
+/* Alert responsive */
+@media (max-width: 767.98px) {
+  .alert {
+    padding: 0.75rem;
+    font-size: 0.875rem;
+  }
+  
+  .alert small {
+    font-size: 0.75rem;
+  }
+}
+
+/* Card responsive cho admin dashboard */
+@media (max-width: 767.98px) {
+  .card {
+    margin-bottom: 1rem;
+  }
+  
+  .card-body {
+    padding: 1rem;
+  }
+  
+  .card-title {
+    font-size: 1.1rem;
+  }
+}
+
+/* Form controls responsive */
+@media (max-width: 767.98px) {
+  .form-control {
+    font-size: 0.875rem;
+  }
+  
+  .form-select {
+    font-size: 0.875rem;
+  }
+}
+
+/* Modal responsive */
+@media (max-width: 767.98px) {
+  .modal-dialog {
+    margin: 0.5rem;
+  }
+  
+  .modal-body {
+    padding: 1rem;
+  }
+  
+  .modal-footer {
+    padding: 0.75rem 1rem;
+  }
+}
+
+/* bbbbbbbbbbbbbbbbbbbbb */
+/* ==== RESET ==== */
+body {
+  margin: 0;
+  padding: 0;
+  font-family: "Roboto", sans-serif;
+  background-color: #f8f9fa;
+}
+
+/* NAVBAR */
+.avatar-circle {
+  width: 28px;
+  height: 28px;
+  background: #ddd;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 1rem;
+  color: #666;
+}
+
+/* DROPDOWN USER */
+.user-dropdown .dropdown-toggle::after {
+  display: none;
+}
+
+.user-dropdown .dropdown-menu {
+  width: 260px;
+  border-radius: 12px;
+  box-shadow: 0 8px 25px rgba(0,0,0,0.15);
+  border: none;
+  margin-top: 8px;
+  padding: 0;
+  overflow: hidden;
+}
+
+.dropdown-header {
+  background-color: #f8f9fa;
+}
+
+.dropdown-header .avatar-circle {
+  background: #e9ecef;
+  color: #6c757d;
+}
+
+.dropdown-item {
+  padding: 10px 16px;
+  font-size: 0.9rem;
+}
+
+.dropdown-item:hover {
+  background-color: #f0f4ff;
+  color: #0d6efd;
+}
+
+.dropdown-item.text-danger:hover {
+  background-color: #ffe6e6;
+}
+
+/* HERO SECTION */
+.hero-section {
+  position: relative;
+  width: 100%;
+  height: 85vh;
+  min-height: 600px;
+  overflow: hidden;
+}
+
+.banner-img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  filter: brightness(0.75);
+}
+
+.banner-overlay {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  background: linear-gradient(to bottom, rgba(0, 0, 0, 0.3), rgba(0, 0, 0, 0.7));
+  z-index: 1;
+}
+
+.banner-content {
+  z-index: 2;
+  top: 50%;
+  transform: translateY(-50%);
+}
+
+/* SEARCH BAR – 3 Ô RIÊNG */
+.search-box {
+  height: 58px;
+  border-radius: 8px;
+  overflow: hidden;
+  border: 1px solid #e0e0e0;
+}
+
+.search-box input::placeholder {
+  color: #999;
+  font-size: 0.95rem;
+}
+
+.search-btn {
+  height: 58px;
+  font-size: 1rem;
+  border-radius: 8px !important;
+}
+
+/* QR IMAGE */
+.qr-img {
+  width: 110px;
+  padding: 8px;
+  background: white;
+  border-radius: 12px;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+}
+
+/* JOB CARD */
+.job-card {
+  transition: all 0.3s ease;
+}
+
+.job-card:hover {
+  transform: translateY(-5px);
+  box-shadow: 0 6px 16px rgba(0, 0, 0, 0.15);
+}
+
+/* FOOTER */
+footer {
+  color: #555;
+}
+
+/* MYJOBS PAGE */
+
+.mycareerlink-page {
+  background-color: #f8f9fa;
+  min-height: 100vh;
+}
+
+/* Search bar không xuống dòng */
+.whitespace-nowrap {
+  white-space: nowrap;
+}
+
+/* Responsive: Ẩn dropdown trên mobile */
+@media (max-width: 992px) {
+  .d-lg-flex {
+    display: none !important;
+  }
+  .d-lg-none {
+    display: block !important;
+  }
+}
+
+/* 4 ô số 0 */
+.mycareerlink-page .text-primary { color: #0d6efd !important; }
+.mycareerlink-page .text-danger { color: #dc3545 !important; }
+.mycareerlink-page .text-warning { color: #ffc107 !important; }
+.mycareerlink-page .text-success { color: #198754 !important; }
+
+/* Submenu active */
+.border-3 {
+  border-width: 3px !important;
+}
+
+/* RESUME PAGE - LAYOUT MỚI */
+.resume-page {
+  background-color: #f8f9fa;
+  min-height: 100vh;
+}
+
+/* Icon tròn lớn */
+.profile-icon-circle-large {
+  width: 100px;
+  height: 100px;
+  background-color: #e9ecef;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+/* Job card nhỏ gọn bên phải */
+.job-suggestion-card {
+  transition: all 0.2s ease;
+  font-size: 0.875rem;
+}
+.job-suggestion-card:hover {
+  box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+  border-color: #007bff !important;
+  transform: translateY(-1px);
+}
+
+/* Sticky sidebar */
+@media (min-width: 992px) {
+  .sticky-top {
+    position: sticky;
+    top: 80px;
+  }
+}
+
+/* SAVED JOBS PAGE */
+.saved-jobs-page {
+  background-color: #f8f9fa;
+  min-height: 100vh;
+}
+
+/* Job saved card */
+.border {
+  transition: all 0.2s;
+}
+.border:hover {
+  box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+  border-color: #007bff !important;
+}
+
+/* Sticky right column */
+@media (min-width: 992px) {
+  .sticky-top {
+    position: sticky;
+    top: 80px;
+  }
+}
+
+/* Gradient ad */
+.bg-gradient {
+  background: linear-gradient(135deg, #1e3a8a, #3b82f6) !important;
+}
+
+
+/* JOB ALERTS PAGE */
+.job-alerts-page {
+  background-color: #f8f9fa;
+  min-height: 100vh;
+}
+
+/* Icon tròn lớn */
+.profile-icon-circle-large {
+  width: 100px;
+  height: 100px;
+  background-color: #e9ecef;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+/* Job suggestion card */
+.job-suggestion-card {
+  transition: all 0.2s ease;
+  font-size: 0.875rem;
+}
+.job-suggestion-card:hover {
+  box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+  border-color: #007bff !important;
+  transform: translateY(-1px);
+}
+
+/* Sticky right column */
+@media (min-width: 992px) {
+  .sticky-top {
+    position: sticky;
+    top: 80px;
+  }
+}
+
+/* APPLIED JOBS PAGE */
+.applied-jobs-page {
+  background-color: #f8f9fa;
+  min-height: 100vh;
+}
+
+/* Sticky right column */
+@media (min-width: 992px) {
+  .sticky-top {
+    position: sticky;
+    top: 80px;
+  }
+}
+
+/* Gradient ad */
+.bg-gradient {
+  background: linear-gradient(135deg, #1e3a8a, #3b82f6) !important;
+}
+
+/* Job card hover */
+.border {
+  transition: all 0.2s;
+}
+.border:hover {
+  box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+  border-color: #007bff !important;
+}

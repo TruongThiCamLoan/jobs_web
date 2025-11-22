@@ -1,0 +1,56 @@
+/* style1-9.css */
+.create-resume-page {
+  background-color: #f8f9fa;
+  min-height: 100vh;
+}
+.create-resume-page {
+  padding-top: 64px; /* Bằng chiều cao navbar */
+}
+
+
+/* THANH CÁC BƯỚC – DÍNH ĐẦU, KHÔNG BỊ CHE */
+.progress-steps-wrapper {
+  background-color: white;
+  border-bottom: 1px solid #dee2e6;
+  position: sticky;
+  top: 0;
+  z-index: 1020;
+  box-shadow: 0 2px 6px rgba(0, 0, 0, 0.08);
+}
+
+/* Đẩy nội dung xuống tránh bị che */
+.create-resume-page > .container {
+  margin-top: 20px !important;
+}
+
+/* Form đẹp hơn */
+.create-resume-page .form-control,
+.create-resume-page .form-select {
+  border-radius: 6px;
+  padding: 0.5rem 0.75rem;
+  font-size: 0.95rem;
+}
+
+.create-resume-page .form-check-inline {
+  margin-right: 1.5rem;
+}
+
+/* Zalo nổi bật */
+.z-3 {
+  z-index: 1050;
+}
+
+/* Responsive */
+@media (max-width: 768px) {
+  .progress-steps-wrapper .d-none.d-md-inline {
+    display: none !important;
+  }
+  .progress-steps-wrapper .flex-fill {
+    min-width: 50px;
+  }
+  .create-resume-page .col-md-6,
+  .create-resume-page .col-md-8,
+  .create-resume-page .col-md-4 {
+    margin-bottom: 1rem;
+  }
+}
