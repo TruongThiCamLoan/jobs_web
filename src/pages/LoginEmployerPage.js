@@ -1,13 +1,26 @@
 import React, { useState } from "react";
 import "bootstrap/dist/css/bootstrap.min.css";
+import { useNavigate } from "react-router-dom"; // <-- import useNavigate
 
 export default function LoginEmployerPage() {
   const [formData, setFormData] = useState({ email: "", password: "" });
+  const navigate = useNavigate(); // <-- khởi tạo navigate
 
   const handleSubmit = (e) => {
     e.preventDefault();
+
     console.log("Thông tin đăng nhập nhà tuyển dụng:", formData);
-    // TODO: Thêm API đăng nhập nhà tuyển dụng ở đây
+
+    // TODO: Gọi API đăng nhập ở đây
+    // Giả sử API trả về success = true nếu đăng nhập thành công
+
+    const success = true; // giả lập
+    if (success) {
+      // Chuyển đến trang Dashboard nhà tuyển dụng
+      navigate("/employer/dashboard"); // <-- đường dẫn trang nhà tuyển dụng
+    } else {
+      alert("Đăng nhập thất bại. Vui lòng kiểm tra lại email/mật khẩu!");
+    }
   };
 
   return (
@@ -16,7 +29,6 @@ export default function LoginEmployerPage() {
         className="shadow-sm rounded p-5 bg-white border"
         style={{ maxWidth: "430px", width: "100%" }}
       >
-        {/* Tiêu đề */}
         <h4 className="text-center text-primary fw-bold mb-2">
           Đăng nhập Nhà tuyển dụng
         </h4>
@@ -24,9 +36,7 @@ export default function LoginEmployerPage() {
           Quản lý tin tuyển dụng và theo dõi ứng viên của công ty bạn
         </p>
 
-        {/* Form đăng nhập */}
         <form onSubmit={handleSubmit}>
-          {/* Email */}
           <div className="mb-3">
             <label className="form-label fw-semibold">Email</label>
             <div className="input-group">
@@ -45,7 +55,6 @@ export default function LoginEmployerPage() {
             </div>
           </div>
 
-          {/* Mật khẩu */}
           <div className="mb-3">
             <label className="form-label fw-semibold">Mật khẩu</label>
             <div className="input-group">
@@ -72,7 +81,6 @@ export default function LoginEmployerPage() {
             </div>
           </div>
 
-          {/* Nút đăng nhập */}
           <button
             type="submit"
             className="btn btn-primary w-100 mt-2 fw-bold"
@@ -81,7 +89,6 @@ export default function LoginEmployerPage() {
           </button>
         </form>
 
-        {/* Liên hệ hỗ trợ */}
         <hr />
         <div className="text-center small">
           <p className="mb-1 fw-semibold">Bạn gặp khó khăn khi đăng nhập?</p>

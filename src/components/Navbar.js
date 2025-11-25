@@ -182,11 +182,6 @@ export default function AppNavbar() {
                   <BoxArrowRight className="me-2" /> Đăng xuất
                 </NavDropdown.Item>
               </NavDropdown>
-
-              {/* NHÀ TUYỂN DỤNG */}
-              <Nav.Link className="text-dark fw-semibold d-flex align-items-center small d-none d-lg-flex">
-                <Flag className="me-1 text-danger" size={16} /> Nhà tuyển dụng
-              </Nav.Link>
             </>
           ) : (
             <>
@@ -210,10 +205,19 @@ export default function AppNavbar() {
               >
                 Đăng ký
               </Button>
+              {/* NHÀ TUYỂN DỤNG */}
+<Button
+  as={Link}
+  to="/employer/dashboard"
+  variant="primary"
+  size="sm"
+  className="ms-2 rounded-pill px-3 fw-semibold"
+>
+  Dành cho Nhà Tuyển Dụng
+</Button>
             </>
           )}
         </Nav>
-
         <Navbar.Toggle aria-controls="main-navbar" className="ms-2" />
       </Container>
     </Navbar>

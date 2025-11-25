@@ -4,7 +4,7 @@ import "bootstrap-icons/font/bootstrap-icons.css";
 import { BrowserRouter as Router, Routes, Route } from "react-router-dom";
 
 
-import { HomePage, LoginPage, RegisterPage, LoginEmployerPage, MyJobsPage, ResumePage, SavedJobsPage, JobAlertsPage, AppliedJobsPage} from "./pages";
+import { HomePage, LoginPage, RegisterPage, LoginEmployerPage, MyJobsPage, RegisterEmployer,  EmployerDashboard , ResumePage, SavedJobsPage, JobAlertsPage, AppliedJobsPage} from "./pages";
 import { CreateResumeStep1, CreateResumeStep2, CreateResumeStep3, CreateResumeStep4, CreateResumeStep5, CreateResumeStep6, CreateResumeStep7, CreateResumeStep8, CreateResumeStep9} from "./pages";
 import { AdminDashboard, EmployersManagement, StudentsManagement, CategoryManagement, ComplaintManagement,StatisticsReport } from "./pages";
 
@@ -15,6 +15,8 @@ function App() {
         <Route path="/" element={<HomePage />} />
         <Route path="/login" element={<LoginPage />} />
         <Route path="/register" element={<RegisterPage />} />
+        <Route path="/employer/register" element={<RegisterEmployer />} />
+        <Route path="/employer/dashboard" element={<EmployerDashboard />} />
         <Route path="/employer" element={<LoginEmployerPage />} />
         <Route path="/myjobs" element={<MyJobsPage />} />
         <Route path="/resume" element={<ResumePage />} />

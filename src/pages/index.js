@@ -7,6 +7,8 @@ export { default as ResumePage } from "./ResumePage";
 export { default as SavedJobsPage } from "./SavedJobsPage";
 export { default as JobAlertsPage } from "./JobAlertsPage";
 export { default as AppliedJobsPage } from "./AppliedJobsPage";
+export { default as RegisterEmployer } from "./RegisterEmployer";
+export { default as EmployerDashboard } from "./EmployerDashboard";
 
 export { default as CreateResumeStep1 } from "./CreateResumeStep1";
 export { default as CreateResumeStep2 } from "./CreateResumeStep2";
