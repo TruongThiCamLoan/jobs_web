@@ -1,41 +1,53 @@
 // src/pages/JobAlertsPage.js
 import React from "react";
 import { Container, Row, Col, Button, Nav } from "react-bootstrap";
-import { Bell, Plus, Heart, Briefcase, FileText } from "react-bootstrap-icons";
+import { Bell, Plus, Heart, Briefcase, FileText, Person } from "react-bootstrap-icons";
 import { Link } from "react-router-dom";
 import AppNavbar from "../components/Navbar";
 import "./style.css";
 
 export default function JobAlertsPage() {
-  return (
-    <div className="job-alerts-page">
-      <AppNavbar />
-
-      {/* SUBMENU */}
-      <div className="bg-light border-bottom py-2">
-        <Container>
-          <Nav className="flex-wrap small">
-            <Nav.Link as={Link} to="/myjobs" className="text-dark">
-              My CareerLink
-            </Nav.Link>
-            <Nav.Link as={Link} to="/resume" className="text-dark">
-              Hồ sơ xin việc (0)
-            </Nav.Link>
-            <Nav.Link as={Link} to="/saved-jobs" className="text-dark">
-              Việc đã lưu (1)
-            </Nav.Link>
-            <Nav.Link as={Link} to="/applied-jobs" className="text-dark">
-              Việc đã ứng tuyển (0)
-            </Nav.Link>
-            <Nav.Link href="/job-alerts" className="text-primary fw-semibold border-bottom border-primary border-3 pb-1">
-              <Bell className="me-1" /> Thông báo việc làm (0)
-            </Nav.Link>
-            <Nav.Link href="#" className="text-dark">
-              Tài khoản
-            </Nav.Link>
-          </Nav>
-        </Container>
-      </div>
+      return (
+             <div className="resume-page pt-5 mt-5 bg-light min-vh-100">
+                 <AppNavbar />
+     
+                    <div className="bg-white border-bottom py-0">
+                     <Container>
+                         {/* THÊM GAP-3 ĐỂ CÁC MỤC GẦN NHAU HƠN */}
+                         <Nav className="flex-wrap small gap-5">
+                             {/* 1. MY CAREERLINK */}
+                             <Nav.Link as={Link} to="/myjobs" className="text-dark py-1">
+                                 <Briefcase size={14} className="me-1" /> My CareerLink
+                             </Nav.Link>
+                             
+                             {/* 2. HỒ SƠ XIN VIỆC (ĐANG ACTIVE LÀ MỤC CON: Tải hồ sơ lên) */}
+                             <Nav.Link as={Link} to="/resume" className="text-dark py-1">
+                                 <FileText size={14} className="me-1" /> Hồ sơ xin việc (0)
+                             </Nav.Link>
+     
+                             {/* 3. VIỆC ĐÃ LƯU */}
+                             <Nav.Link as={Link} to="/saved-jobs" className="text-dark py-1">
+                                 <Heart size={14} className="me-1" /> Việc đã lưu (0)
+                             </Nav.Link>
+                             
+                             {/* 4. VIỆC ĐÃ ỨNG TUYỂN */}
+                             <Nav.Link as={Link} to="/applied-jobs" className="text-dark py-1">
+                                 <Briefcase size={14} className="me-1" /> Việc đã ứng tuyển (0)
+                             </Nav.Link>
+                             
+                              {/* 5. THÔNG BÁO VIỆC LÀM */}
+                             <Nav.Link as={Link} to="/job-alerts" className="text-primary fw-semibold border-bottom border-primary border-3 pb-1">
+                                 <Bell size={14} className="me-1" /> Thông báo việc làm (0)
+                             </Nav.Link>
+                             
+                              {/* 6. TÀI KHOẢN */}
+                              <Nav.Link as={Link} to="/account" className="text-dark py-1">
+                                  <Person className="me-1" /> Tài khoản
+                             </Nav.Link>
+                             
+                         </Nav>
+                     </Container>
+                 </div>
 
       <Container className="my-5">
         <Row className="g-4">

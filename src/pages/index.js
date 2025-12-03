@@ -9,9 +9,14 @@ export { default as JobAlertsPage } from "./JobAlertsPage";
 export { default as AppliedJobsPage } from "./AppliedJobsPage";
 export { default as RegisterEmployer } from "./RegisterEmployer";
 export { default as EmployerDashboard } from "./EmployerDashboard";
+export { default as JobDetailPage } from "./JobDetailPage";
+export { default as JobSearchPage } from "./JobSearchPage";
+export { default as EmployersPage } from "./EmployersPage";
+export { default as UploadResumePage } from "./UploadResumePage";
+export { default as AccountPage } from "./AccountPage";
 
 export { default as CreateResumeStep1 } from "./CreateResumeStep1";
-export { default as CreateResumeStep2 } from "./CreateResumeStep2";
+export { default as CreateResumeStep2 } from "./CreateResumeStep2"; 
 export { default as CreateResumeStep3 } from "./CreateResumeStep3";
 export { default as CreateResumeStep4 } from "./CreateResumeStep4";
 export { default as CreateResumeStep5 } from "./CreateResumeStep5";

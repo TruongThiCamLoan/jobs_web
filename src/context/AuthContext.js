@@ -1,65 +1,64 @@
-import { createContext, useContext, useState, useEffect } from "react";
+// src/context/AuthContext.js
+
+import React, { createContext, useContext, useState, useEffect } from 'react';
+import AuthService from '../services/auth.service';
 
 const AuthContext = createContext();
 
 export const AuthProvider = ({ children }) => {
-  const [users, setUsers] = useState(
-    JSON.parse(localStorage.getItem("users")) || []
-  );
+    // Tải thông tin người dùng từ Local Storage khi component mount
+    const [currentUser, setCurrentUser] = useState(AuthService.getCurrentUser());
+    const [loading, setLoading] = useState(true);
 
-  const [user, setUser] = useState(
-    JSON.parse(localStorage.getItem("currentUser")) || null
-  );
+    useEffect(() => {
+        // Kết thúc trạng thái loading ban đầu sau khi tải currentUser
+        setLoading(false);
+    }, []);
 
-  // Đồng bộ localStorage khi users thay đổi
-  useEffect(() => {
-    localStorage.setItem("users", JSON.stringify(users));
-  }, [users]);
+    const login = async (email, password) => {
+        setLoading(true);
+        const result = await AuthService.login(email, password);
+        if (result.success) {
+            setCurrentUser(result.user);
+        }
+        setLoading(false);
+        return result;
+    };
+    
+    const logout = () => {
+        AuthService.logout();
+        setCurrentUser(null);
+    };
 
-  // Đồng bộ localStorage khi user thay đổi
-  useEffect(() => {
-    if (user) {
-      localStorage.setItem("currentUser", JSON.stringify(user));
-    } else {
-      localStorage.removeItem("currentUser");
-    }
-  }, [user]);
+    const register = async (fullName, email, password, role) => {
+        setLoading(true);
+        const result = await AuthService.register(fullName, email, password, role);
+        setLoading(false);
+        return result;
+    };
 
-  // Đăng ký người dùng mới (không tự login)
-  const register = (newUser) => {
-    const emailExists = users.some((u) => u.email === newUser.email);
-    if (emailExists) {
-      return { success: false, message: "Email đã được sử dụng." };
-    }
+    // ✨ KHẮC PHỤC LỖI 401: Lấy Token từ trường accessToken của đối tượng currentUser
+    const authToken = currentUser?.accessToken;
 
-    const updatedUsers = [...users, newUser];
-    setUsers(updatedUsers);
-    return { success: true };
-  };
+    const value = {
+        currentUser,
+        loading,
+        login,
+        logout,
+        register,
+        
+        // CUNG CẤP authToken CHO CÁC COMPONENT SỬ DỤNG HOOK useAuth()
+        authToken, 
+        
+        isAuthenticated: !!currentUser,
+        isAdmin: currentUser?.role === 'Admin',
+        isEmployer: currentUser?.role === 'Employer',
+        isStudent: currentUser?.role === 'Student',
+    };
 
-  // Đăng nhập
-  const login = (email, password) => {
-    const foundUser = users.find(
-      (u) => u.email === email && u.password === password
-    );
-    if (!foundUser) {
-      return { success: false, message: "Email hoặc mật khẩu không đúng." };
-    }
-
-    setUser(foundUser);
-    return { success: true };
-  };
-
-  // Đăng xuất
-  const logout = () => {
-    setUser(null);
-  };
-
-  return (
-    <AuthContext.Provider value={{ users, user, register, login, logout }}>
-      {children}
-    </AuthContext.Provider>
-  );
+    return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>;
 };
 
-export const useAuth = () => useContext(AuthContext);
+export const useAuth = () => {
+    return useContext(AuthContext);
+};

@@ -521,3 +521,21 @@ footer {
   box-shadow: 0 2px 8px rgba(0,0,0,0.1);
   border-color: #007bff !important;
 }
+
+/* Trong style.css (hoặc file CSS tương ứng) */
+.profile-icon-circle-large {
+    width: 100px;
+    height: 100px;
+    border-radius: 50%;
+    background-color: var(--bs-light); /* Màu nền mặc định */
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+/* Class cho icon trong Modal */
+.profile-icon-circle-large-modal {
+    width: 60px; /* Kích thước nhỏ hơn cho modal */
+    height: 60px;
+    /* Các thuộc tính còn lại được định nghĩa inline trong modal component */
+}
