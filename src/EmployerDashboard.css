@@ -880,3 +880,179 @@ button {
   from { transform: translateY(50px); opacity: 0; }
   to { transform: translateY(0); opacity: 1; }
 }
+.dashboard-card {
+  background: #fff;
+  border-radius: 12px;
+  box-shadow: 0 8px 22px rgba(34, 40, 49, 0.08);
+  padding: 22px;
+  margin: 20px 0;
+  border: 1px solid rgba(34,40,49,0.04);
+}
+
+.dashboard-card-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 12px;
+  margin-bottom: 18px;
+}
+
+.dashboard-card-header h2 {
+  margin: 0;
+  font-size: 20px;
+}
+
+.dashboard-card-header .muted {
+  color: #6b7280;
+  margin-top: 4px;
+  font-size: 13px;
+}
+
+/* quick actions small */
+.dashboard-actions .action-btn.small {
+  padding: 8px 12px;
+  font-size: 13px;
+}
+
+/* Stats grid */
+.stats-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(160px, 1fr));
+  gap: 14px;
+  margin-bottom: 18px;
+}
+
+.stat-card {
+  padding: 16px;
+  border-radius: 10px;
+  color: #fff;
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  min-height: 88px;
+  justify-content: center;
+}
+
+.stat-card .stat-value {
+  font-size: 22px;
+  font-weight: 700;
+}
+
+.stat-card .stat-label {
+  font-size: 13px;
+  opacity: 0.95;
+}
+
+/* color variants */
+.stat-card.blue { background: linear-gradient(135deg,#2f80ed,#3b82f6); }
+.stat-card.green { background: linear-gradient(135deg,#16a34a,#22c55e); }
+.stat-card.purple { background: linear-gradient(135deg,#7c3aed,#a78bfa); }
+.stat-card.orange { background: linear-gradient(135deg,#f97316,#fb923c); }
+
+/* recent activity */
+.recent-activity {
+  margin-top: 8px;
+  padding-top: 10px;
+  border-top: 1px dashed #eef2ff;
+}
+
+.recent-activity h3 {
+  margin-bottom: 8px;
+  font-size: 16px;
+}
+
+.recent-activity ul {
+  margin: 0;
+  padding-left: 18px;
+  color: #374151;
+}
+
+/* candidate table wrapper */
+.candidate-table-wrapper {
+  margin-top: 12px;
+  overflow-x: auto;
+}
+
+/* small niceties */
+.notice.success {
+  padding: 12px;
+  background: #ecfdf5;
+  color: #065f46;
+  border-radius: 8px;
+  margin-bottom: 14px;
+}
+
+/* profile card tweaks */
+.profile-card {
+  display: grid;
+  grid-template-columns: 220px 1fr;
+  gap: 20px;
+  align-items: start;
+  background: #fff;
+  padding: 18px;
+  border-radius: 10px;
+  box-shadow: 0 6px 18px rgba(2,6,23,0.06);
+  border: 1px solid rgba(34,40,49,0.03);
+}
+
+.logo-preview { text-align: center; }
+.company-logo { max-width: 180px; max-height: 120px; object-fit: contain; border-radius: 6px; }
+.logo-remove {
+  position: absolute;
+  top: 6px;
+  right: 6px;
+  background: rgba(0,0,0,0.6);
+  color: #fff;
+  border: none;
+  border-radius: 50%;
+  width: 28px;
+  height: 28px;
+  cursor: pointer;
+}
+
+/* auto-save note */
+.auto-save-note {
+  margin-top: 14px;
+  padding: 12px;
+  background: #e3f2fd;
+  border-radius: 8px;
+  color: #1565c0;
+  text-align: center;
+}
+
+/* table / buttons small styles */
+.job-table th, .candidate-table th { text-align: left; padding: 10px 12px; color: #374151; font-weight: 600; }
+.job-table td, .candidate-table td { padding: 10px 12px; border-top: 1px solid #f3f4f6; color: #111827; }
+
+.btn-view-cv, .btn-approve, .btn-reject, .btn-invite {
+  margin-right: 6px;
+  padding: 6px 10px;
+  font-size: 13px;
+  border-radius: 6px;
+  border: none;
+  cursor: pointer;
+}
+
+.btn-approve { background: #10b981; color: #fff; }
+.btn-reject { background: #ef4444; color: #fff; }
+.btn-invite { background: #2563eb; color: #fff; }
+.btn-view-cv { background: #f3f4f6; color: #111827; border: 1px solid #e5e7eb; }
+
+/* status badges */
+.status { padding: 6px 8px; border-radius: 6px; font-size: 13px; color: #fff; }
+.status.pending { background: #f59e0b; }
+.status.approved { background: #10b981; }
+.status.rejected { background: #ef4444; color: #fff; }
+
+/* modal small adjustments (if used) */
+.modal-content { max-width: 720px; width: 92%; padding: 18px; border-radius: 10px; }
+.cv-body { display: flex; gap: 18px; align-items: flex-start; }
+.cv-info { flex: 1; }
+.cv-actions { display: flex; flex-direction: column; gap: 8px; min-width: 180px; align-items: flex-end; }
+
+/* responsive */
+@media (max-width: 880px) {
+  .profile-card { grid-template-columns: 1fr; }
+  .dashboard-card { padding: 14px; }
+  .stats-grid { grid-template-columns: repeat(2, 1fr); }
+}

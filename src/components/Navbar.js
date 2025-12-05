@@ -12,6 +12,7 @@ import {
     BriefcaseFill,
     Bell,
     BoxArrowRight,
+    Person,
 } from "react-bootstrap-icons";
 
 import logo from "../img/logo.png";
@@ -199,7 +200,7 @@ export default function AppNavbar() {
                             {isStudent && (
                                 <>
                                     <NavDropdown.Item as={Link} to="/myjobs" className="py-2">
-                                        <Briefcase className="me-2" /> My CareerLink
+                                        <Briefcase className="me-2" /> My Jobs
                                     </NavDropdown.Item>
 
                                     <NavDropdown.Item as={Link} to="/resume" className="py-2">
@@ -216,6 +217,10 @@ export default function AppNavbar() {
 
                                     <NavDropdown.Item as={Link} to="/job-alerts" className="py-2">
                                         <Bell className="me-2" /> Thông báo việc làm
+                                    </NavDropdown.Item>
+
+                                    <NavDropdown.Item as={Link} to="/account" className="py-2">
+                                        <Person className="me-2" /> Tài khoản 
                                     </NavDropdown.Item>
                                 </>
                             )}

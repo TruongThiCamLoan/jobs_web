@@ -5,13 +5,14 @@ const db = require('../models');
 const Job = db.Job;
 const Employer = db.Employer; 
 const User = db.User;
+const Category = db.Category; // <-- BƯỚC SỬA: Import model Category
 
 // Danh sách các cột chi tiết cần lấy từ bảng Jobs
 const JOB_ATTRIBUTES = [
     'jobId', 'employerId', 'title', 'description', 'requirements', 
     'salary', 'location', 'postDate', 'deadline', 'status',
     'quantity', 'experience', 'academicLevel', 'workingHours', 
-    'industry', 'benefits', 'tags', 'jobLevel', 'jobType', 'gender'
+    'industryId', 'benefits', 'tags', 'jobLevelId', 'jobTypeId', 'gender'
 ];
 
 // ----------------- Hàm Tạo Job (Protected) -----------------
@@ -19,8 +20,8 @@ exports.createJob = async (req, res) => {
     const userId = req.userId; // ID người dùng từ JWT
     const { 
         title, description, location, salary, requirements, status,
-        quantity, experience, academicLevel, workingHours, industry, 
-        benefits, tags, jobLevel, jobType, gender
+        quantity, experience, academicLevel, workingHours, industryId, 
+        benefits, tags, jobLevelId, jobTypeId, gender
     } = req.body; // Lấy thêm các trường mới
 
     try {
@@ -46,11 +47,11 @@ exports.createJob = async (req, res) => {
             experience: experience, 
             academicLevel: academicLevel, 
             workingHours: workingHours, 
-            industry: industry, 
+            industryId: industryId,
             benefits: benefits, 
             tags: tags, 
-            jobLevel: jobLevel, 
-            jobType: jobType, 
+            jobLevelId: jobLevelId,
+            jobTypeId: jobTypeId,
             gender: gender
         });
 
@@ -68,14 +69,15 @@ exports.getJobList = async (req, res) => {
 
     const where = {};
     
-    // Xử lý bộ lọc tìm kiếm (Search Term): Lọc theo Title, Description, Requirements, Industry
+    // Xử lý bộ lọc tìm kiếm (Search Term)
     if (search) {
         const searchCondition = {
             [Op.or]: [
                 { title: { [Op.like]: `%${search}%` } },
                 { description: { [Op.like]: `%${search}%` } },
                 { requirements: { [Op.like]: `%${search}%` } },
-                { industry: { [Op.like]: `%${search}%` } }, // Thêm lọc theo industry
+                // Lọc theo industryId (ID)
+                { industryId: { [Op.like]: `%${search}%` } },
             ]
         };
         // Gán điều kiện tìm kiếm chung vào where
@@ -92,20 +94,37 @@ exports.getJobList = async (req, res) => {
     try {
         const jobs = await Job.findAll({
             where: where, // Áp dụng các điều kiện tìm kiếm
-            attributes: JOB_ATTRIBUTES, // FIX: Lấy tất cả các cột chi tiết
-            include: [{ 
-                model: Employer, 
-                as: 'employer',
-                // FIX: Thêm logoUrl và website vào thuộc tính Employer
-                attributes: ['companyName', 'companyDescription', 'companyAddress', 'logoUrl', 'website'] 
-            }],
+            attributes: JOB_ATTRIBUTES, // Lấy tất cả các cột chi tiết
+            include: [
+                { 
+                    model: Employer, 
+                    as: 'employer',
+                    attributes: ['companyName', 'companyDescription', 'companyAddress', 'logoUrl', 'website'] 
+                },
+                // BƯỚC SỬA: INCLUDE ASSOCIATIONS ĐỂ LẤY TÊN DANH MỤC
+                { 
+                    model: Category, 
+                    as: 'industryCategory', // Bí danh từ db/index.js
+                    attributes: ['name'] // Chỉ lấy tên
+                },
+                { 
+                    model: Category, 
+                    as: 'jobLevelCategory', 
+                    attributes: ['name'] 
+                },
+                { 
+                    model: Category, 
+                    as: 'jobTypeCategory', 
+                    attributes: ['name'] 
+                }
+            ],
             order: [['postDate', 'DESC']]
         });
         
         return res.status(200).json(jobs);
     } catch (error) {
         console.error("Lỗi tải danh sách việc làm:", error);
-        return res.status(500).json({ message: 'Lỗi server khi lấy danh sách việc làm.' });
+        return res.status(500).json({ message: error.message || 'Lỗi server khi lấy danh sách việc làm.' });
     }
 };
 
@@ -115,20 +134,38 @@ exports.getJobDetail = async (req, res) => {
 
     try {
         const job = await Job.findByPk(jobId, {
-            attributes: JOB_ATTRIBUTES, // FIX: Lấy tất cả các cột chi tiết
-            include: [{ 
-                model: Employer, 
-                as: 'employer',
-                // FIX: Thêm logoUrl và website vào thuộc tính Employer
-                attributes: ['companyName', 'companyDescription', 'companyAddress', 'phoneNumber', 'website', 'logoUrl'] 
-            }]
+            attributes: JOB_ATTRIBUTES, // Lấy tất cả các cột chi tiết (Đã được FIX ở trên)
+            include: [
+                { 
+                    model: Employer, 
+                    as: 'employer',
+                    // Thêm logoUrl và website vào thuộc tính Employer
+                    attributes: ['companyName', 'companyDescription', 'companyAddress', 'phoneNumber', 'website', 'logoUrl'] 
+                },
+                // BƯỚC SỬA: INCLUDE ASSOCIATIONS ĐỂ LẤY TÊN DANH MỤC
+                { 
+                    model: Category, 
+                    as: 'industryCategory', 
+                    attributes: ['name'] 
+                },
+                { 
+                    model: Category, 
+                    as: 'jobLevelCategory', 
+                    attributes: ['name'] 
+                },
+                { 
+                    model: Category, 
+                    as: 'jobTypeCategory', 
+                    attributes: ['name'] 
+                }
+            ]
         });
         
         if (!job) {
             return res.status(404).json({ message: 'Không tìm thấy bài đăng tuyển dụng.' });
         }
         
-        // FIX: Trả về kết quả JSON để tags (JSON type) được parse đúng
+        // Trả về kết quả JSON
         return res.status(200).json(job); 
     } catch (error) {
         console.error("Lỗi khi lấy chi tiết Job:", error);
@@ -161,7 +198,8 @@ exports.updateJob = async (req, res) => {
         });
 
         if (updated) {
-            const updatedJob = await Job.findByPk(jobId);
+            // Lấy lại Job với các thuộc tính cần thiết
+            const updatedJob = await Job.findByPk(jobId, { attributes: JOB_ATTRIBUTES });
             return res.status(200).send({ message: "Cập nhật thành công!", job: updatedJob });
         }
 

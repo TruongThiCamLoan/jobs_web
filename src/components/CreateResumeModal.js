@@ -40,7 +40,7 @@ export default function CreateResumeModal({ show, handleClose, onCreateBySteps, 
                 
                 <h6 className="fw-bold text-dark mb-3">Tạo hồ sơ theo từng bước</h6>
                 <ul className="list-unstyled text-start small text-muted px-2 flex-grow-1">
-                  <li className="mb-2">Đủ **6 bước** yêu cầu để hoàn thành việc tạo hồ sơ.</li>
+                  <li className="mb-2">Đủ **9 bước** yêu cầu để hoàn thành việc tạo hồ sơ.</li>
                   <li className="mb-2">Theo từng bước định dạng sẵn để tạo hồ sơ với thông tin chính xác.</li>
                   <li>Cơ hội để các Nhà tuyển dụng tìm thấy hồ sơ bạn **cao hơn** khi sử dụng hình thức tạo hồ sơ này.</li>
                 </ul>
@@ -67,7 +67,7 @@ export default function CreateResumeModal({ show, handleClose, onCreateBySteps, 
                 
                 <h6 className="fw-bold text-dark mb-3">Hồ sơ đính kèm</h6>
                 <ul className="list-unstyled text-start small text-muted px-2 flex-grow-1">
-                  <li className="mb-2">**4 bước** yêu cầu để hoàn thành việc tạo hồ sơ.</li>
+                  <li className="mb-2">**9 bước** yêu cầu để hoàn thành việc tạo hồ sơ.</li>
                   <li>Bạn có thể tải lên và đính kèm file **Word, Excel hay PDF**.</li>
                   <li className="text-white">.</li>
                 </ul>

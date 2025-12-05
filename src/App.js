@@ -3,7 +3,9 @@ import { BrowserRouter as Router, Routes, Route } from 'react-router-dom';
 import { AuthProvider } from './context/AuthContext'; 
 
 // Import các Components theo cấu trúc Destructuring của bạn
-import { HomePage, LoginPage, RegisterPage, LoginEmployerPage, MyJobsPage, UploadResumePage, AccountPage, RegisterEmployer, EmployerDashboard, EmployersPage  , ResumePage, SavedJobsPage, JobAlertsPage, AppliedJobsPage, JobSearchPage} from "./pages";
+import { HomePage, LoginPage, RegisterPage, LoginEmployerPage, MyJobsPage, UploadResumePage, 
+	AccountPage, RegisterEmployer, EmployerDashboard, EmployersPage  , EmailNotificationPage,
+	ResumePage, SavedJobsPage, JobAlertsPage, AppliedJobsPage, JobSearchPage, ChangePasswordPage} from "./pages";
 
 // ✅ SỬA: Import JobDetailPage trực tiếp (Vì nó là export default)
 import JobDetailPage from './pages/JobDetailPage'; 
@@ -39,6 +41,8 @@ function App() {
 					<Route path="/applied-jobs" element={<AppliedJobsPage />} />
 					<Route path="/upload-resume" element={<UploadResumePage />} />
 					<Route path="/account" element={<AccountPage />} />
+					<Route path="/account/password" element={<ChangePasswordPage />} />
+					<Route path="/account/notifications" element={<EmailNotificationPage />} />
 
 					{/* RESUME CREATION ROUTES */}
 					<Route path="/create-resume/step1" element={<CreateResumeStep1 />} />

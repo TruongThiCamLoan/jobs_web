@@ -1,142 +1,56 @@
-// jobs-api/controllers/report.controller.js (CODE HOÀN CHỈNH)
-
+// Ví dụ về logic controller trong report.controller.js
 const db = require('../models');
-const Report = db.Report;
-const Complaint = db.Complaint;
-const User = db.User; // Để join lấy thông tin người gửi
+const Report = db.Report; // Giả sử bạn có Model Report
 
-// ----------------- REPORT APIs -----------------
+exports.createJobReport = async (req, res) => {
+    // userId (người báo cáo)
+    const userId = req.userId; 
+    // jobId (entityId)
+    const reportedJobId = req.params.jobId; 
+    // reason (description)
+    const { reason } = req.body; 
 
-// Hàm 1: Gửi Báo cáo (Tất cả người dùng)
-exports.submitReport = async (req, res) => {
-    const userId = req.userId; // ID người gửi báo cáo từ JWT
-    const { reportType, entityId, description } = req.body;
+    // Dữ liệu cố định
+    const reportType = 'Job'; // Loại đối tượng bị báo cáo là 'Job'
+    const status = 'Pending'; // Trạng thái ban đầu
 
-    if (!reportType || !entityId) {
-        return res.status(400).send({ message: "Vui lòng cung cấp loại báo cáo và ID đối tượng." });
+    if (!reason || reason.length < 10) {
+        return res.status(400).send({ message: "Lý do báo cáo (description) phải có ít nhất 10 ký tự." });
     }
 
     try {
-        const report = await Report.create({
-            userId,
-            reportType,
-            entityId,
-            description,
-            status: 'Pending'
+        // 1. Kiểm tra xem người dùng đã báo cáo công việc này chưa (tùy chọn)
+        const existingReport = await Report.findOne({ 
+            where: { 
+                userId: userId, 
+                entityId: reportedJobId,
+                reportType: reportType
+            } 
         });
 
-        res.status(201).send({ message: "Báo cáo đã được gửi thành công!", report });
-    } catch (error) {
-        console.error("Lỗi khi gửi báo cáo:", error);
-        res.status(500).send({ message: error.message || "Lỗi server khi gửi báo cáo." });
-    }
-};
-
-// Hàm 2: Lấy tất cả Báo cáo (Chỉ Admin)
-exports.getAllReports = async (req, res) => {
-    try {
-        const reports = await Report.findAll({
-            include: [{ model: User, as: 'user', attributes: ['fullName', 'email', 'role'] }],
-            order: [['reportDate', 'DESC']]
-        });
-        res.status(200).json(reports);
-    } catch (error) {
-        console.error("Lỗi khi lấy báo cáo:", error);
-        res.status(500).send({ message: error.message || "Lỗi server khi lấy danh sách báo cáo." });
-    }
-};
-
-// Hàm 3: Cập nhật Trạng thái Báo cáo (Chỉ Admin)
-exports.updateReportStatus = async (req, res) => {
-    const reportId = req.params.id;
-    const { status } = req.body;
-    
-    const validStatuses = ['Pending', 'Resolved', 'Ignored'];
-    if (!validStatuses.includes(status)) {
-        return res.status(400).send({ message: "Trạng thái báo cáo không hợp lệ." });
-    }
-
-    try {
-        const [updated] = await Report.update({ status: status }, {
-            where: { reportId: reportId }
-        });
-
-        if (updated) {
-            return res.status(200).send({ message: "Cập nhật trạng thái báo cáo thành công!", newStatus: status });
+        if (existingReport) {
+            return res.status(409).send({ message: "Bạn đã báo cáo công việc này rồi. Admin sẽ sớm xem xét." });
         }
-        
-        return res.status(404).send({ message: "Không tìm thấy báo cáo để cập nhật." });
 
-    } catch (error) {
-        console.error("Lỗi khi cập nhật trạng thái báo cáo:", error);
-        res.status(500).send({ message: error.message || "Lỗi server khi cập nhật." });
-    }
-};
-
-
-// ----------------- COMPLAINT APIs -----------------
-
-// Hàm 4: Gửi Khiếu nại (Tất cả người dùng)
-exports.submitComplaint = async (req, res) => {
-    const userId = req.userId; // ID người gửi khiếu nại từ JWT
-    const { title, details } = req.body;
-
-    if (!title || !details) {
-        return res.status(400).send({ message: "Vui lòng cung cấp tiêu đề và chi tiết khiếu nại." });
-    }
-
-    try {
-        const complaint = await Complaint.create({
-            userId,
-            title,
-            details,
-            status: 'Pending'
+        // 2. Tạo báo cáo mới với mapping cột chính xác
+        const newReport = await Report.create({
+            // Khóa chính reportId sẽ tự động tạo (nếu là auto-increment)
+            userId: userId,
+            reportType: reportType,         // Loại: 'Job'
+            entityId: reportedJobId,        // ID của Job bị báo cáo
+            description: reason,            // Nội dung khiếu nại
+            reportDate: new Date(),         // Ngày báo cáo
+            status: status,                 // Trạng thái: 'Pending'
+            // createdAt, updatedAt sẽ tự động tạo bởi Sequelize
         });
 
-        res.status(201).send({ message: "Khiếu nại đã được gửi thành công!", complaint });
-    } catch (error) {
-        console.error("Lỗi khi gửi khiếu nại:", error);
-        res.status(500).send({ message: error.message || "Lỗi server khi gửi khiếu nại." });
-    }
-};
-
-// Hàm 5: Lấy tất cả Khiếu nại (Chỉ Admin)
-exports.getAllComplaints = async (req, res) => {
-    try {
-        const complaints = await Complaint.findAll({
-            include: [{ model: User, as: 'user', attributes: ['fullName', 'email', 'role'] }],
-            order: [['complaintDate', 'DESC']]
-        });
-        res.status(200).json(complaints);
-    } catch (error) {
-        console.error("Lỗi khi lấy khiếu nại:", error);
-        res.status(500).send({ message: error.message || "Lỗi server khi lấy danh sách khiếu nại." });
-    }
-};
-
-// Hàm 6: Cập nhật Trạng thái Khiếu nại (Chỉ Admin)
-exports.updateComplaintStatus = async (req, res) => {
-    const complaintId = req.params.id;
-    const { status } = req.body;
-    
-    const validStatuses = ['Pending', 'Processing', 'Closed'];
-    if (!validStatuses.includes(status)) {
-        return res.status(400).send({ message: "Trạng thái khiếu nại không hợp lệ." });
-    }
-
-    try {
-        const [updated] = await Complaint.update({ status: status }, {
-            where: { complaintId: complaintId }
+        res.status(201).send({ 
+            message: "Báo cáo đã được gửi thành công đến Admin!", 
+            reportId: newReport.reportId 
         });
 
-        if (updated) {
-            return res.status(200).send({ message: "Cập nhật trạng thái khiếu nại thành công!", newStatus: status });
-        }
-        
-        return res.status(404).send({ message: "Không tìm thấy khiếu nại để cập nhật." });
-
     } catch (error) {
-        console.error("Lỗi khi cập nhật trạng thái khiếu nại:", error);
-        res.status(500).send({ message: error.message || "Lỗi server khi cập nhật." });
+        console.error("Lỗi khi tạo báo cáo:", error);
+        res.status(500).send({ message: "Lỗi máy chủ khi xử lý báo cáo." });
     }
 };

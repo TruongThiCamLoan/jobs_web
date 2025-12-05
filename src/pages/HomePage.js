@@ -173,7 +173,7 @@ export default function HomePage() {
 
                 <div className="banner-content position-absolute w-100 text-center text-white">
                     <Container className="h-100 d-flex flex-column justify-content-center align-items-center">
-                        <h1 className="display-4 fw-bold mb-3">CareerLink.vn</h1>
+                        <h1 className="display-4 fw-bold mb-3">VIECLAM24H.vn</h1>
                         <h3 className="fw-medium mb-4">
                             nay đã có mặt trên <span className="text-warning fw-bold">Zalo OA</span>
                         </h3>

@@ -48,6 +48,7 @@ module.exports = (sequelize, DataTypes) => {
         // Education thuộc về Student
         Education.belongsTo(models.Student, {
             foreignKey: 'studentId',
+            as: 'education',
             onDelete: 'CASCADE', // Xóa mục học vấn khi xóa Student
         });
     };

@@ -1,205 +1,343 @@
-import React, { useState } from "react";
-import { Table, Button, Modal, Form, Toast } from "react-bootstrap";
-import { PencilFill, TrashFill } from "react-bootstrap-icons";
+import React, { useState, useEffect, useCallback } from "react";
+// Thay thế react-bootstrap-icons bằng các icon Lucide-React
+import { Trash2, Edit } from 'lucide-react'; 
+import { Table, Button, Modal, Form, Toast, Spinner } from "react-bootstrap";
+// Giả định các components này là hợp lệ trong cấu trúc của bạn
 import AdminSidebarLayout from "../../components/AdminSidebar";
 import Pagination from "../../components/Pagination";
-import "../../components/AdminSidebar.css";
+
+// 🎯 IMPORT CÁC HÀM API ĐÃ TẠO từ file services/admin/api.js
+import { 
+    createCategory, 
+    getAllCategories, 
+    updateCategory, 
+    deleteCategory 
+} from '../../services/admin/api'; 
 
 export default function JobCategoryManagement() {
-  const [categories, setCategories] = useState([
-    { id: 1, name: "Công nghệ thông tin", description: "Ngành IT" },
-    { id: 2, name: "Marketing", description: "Ngành Marketing" },
-    { id: 3, name: "Kinh doanh", description: "Ngành Sales & Business" },
-  ]);
-  const [searchTerm, setSearchTerm] = useState("");
-  const [currentPage, setCurrentPage] = useState(1);
-  const [showModal, setShowModal] = useState(false);
-  const [showToast, setShowToast] = useState(false);
-  const [toastMessage, setToastMessage] = useState("");
-  const [toastType, setToastType] = useState("success");
-  const [editingCategory, setEditingCategory] = useState(null);
-  const [newCategory, setNewCategory] = useState({ name: "", description: "" });
-  const [deletingCategoryId, setDeletingCategoryId] = useState(null);
+    // ----------------- TRẠNG THÁI -----------------
+    const [categories, setCategories] = useState([]);
+    const [isLoading, setIsLoading] = useState(true); 
+    const [searchTerm, setSearchTerm] = useState("");
+    const [currentPage, setCurrentPage] = useState(1);
+    const [showModal, setShowModal] = useState(false);
+    const [showToast, setShowToast] = useState(false);
+    const [toastMessage, setToastMessage] = useState("");
+    const [toastType, setToastType] = useState("success");
+    const [editingCategory, setEditingCategory] = useState(null);
+    // Bổ sung trường 'type' vì backend yêu cầu
+    const [newCategory, setNewCategory] = useState({ name: "", description: "", type: "INDUSTRY" });
+    const [deletingCategoryId, setDeletingCategoryId] = useState(null);
+    const [isSaving, setIsSaving] = useState(false);
 
-  const itemsPerPage = 5;
+    const itemsPerPage = 5;
 
-  const filteredCategories = categories.filter(cat =>
-    cat.name.toLowerCase().includes(searchTerm.toLowerCase())
-  );
+    // ----------------- HÀM TẢI DỮ LIỆU TỪ API (ĐÃ FIX) -----------------
+   const fetchCategories = useCallback(async () => {
+    setIsLoading(true);
+    try {
+        // FIX: Đảm bảo lấy được toàn bộ đối tượng Axios Response
+        const response = await getAllCategories();
 
-  const totalPages = Math.ceil(filteredCategories.length / itemsPerPage);
-  const indexOfLast = currentPage * itemsPerPage;
-  const indexOfFirst = indexOfLast - itemsPerPage;
-  const currentCategories = filteredCategories.slice(indexOfFirst, indexOfLast);
+        // FIX CHÍNH: Lấy dữ liệu danh mục thực sự từ response.data
+        const rawData = response.data; 
 
-  const handlePageChange = (page) => setCurrentPage(page);
+        // 🔥 Đảm bảo categories luôn là array, xử lý cả 2 trường hợp API trả về mảng trực tiếp hoặc đối tượng
+        setCategories(Array.isArray(rawData) ? rawData : rawData?.categories || []);
 
-  const validateCategory = () => {
-    if (!newCategory.name.trim()) {
-      setToastMessage("⚠️ Vui lòng nhập tên danh mục!");
-      setToastType("danger");
-      setShowToast(true);
-      return false;
+    } catch (error) {
+        console.error("Lỗi khi tải danh mục:", error);
+        const errorMessage = error.response?.data?.message || error.message || 'Không thể kết nối API.';
+        setToastMessage(`❌ Lỗi tải dữ liệu: ${errorMessage}`);
+        setToastType("danger");
+        setShowToast(true);
+        setCategories([]);
+    } finally {
+        setIsLoading(false);
     }
-    return true;
-  };
+}, []);
 
-  const handleSaveCategory = () => {
-    if (!validateCategory()) return;
+    useEffect(() => {
+        fetchCategories();
+    }, [fetchCategories]); // Tải dữ liệu khi component mount
 
-    if (editingCategory) {
-      setCategories(categories.map(cat =>
-        cat.id === editingCategory.id ? { ...cat, ...newCategory } : cat
-      ));
-      setToastMessage("✅ Cập nhật danh mục thành công!");
-    } else {
-      const newId = categories.length ? Math.max(...categories.map(c => c.id)) + 1 : 1;
-      setCategories([...categories, { id: newId, ...newCategory }]);
-      setToastMessage("✅ Thêm danh mục thành công!");
+    // ----------------- LOGIC PHÂN TRANG & LỌC -----------------
+    // Khắc phục lỗi categories.filter is not a function
+    const filteredCategories = (categories || []).filter(cat =>
+        cat.name.toLowerCase().includes(searchTerm.toLowerCase())
+    );
+
+    const totalPages = Math.ceil(filteredCategories.length / itemsPerPage);
+    const indexOfLast = currentPage * itemsPerPage;
+    const indexOfFirst = indexOfLast - itemsPerPage;
+    const currentCategories = filteredCategories.slice(indexOfFirst, indexOfLast);
+
+    const handlePageChange = (page) => setCurrentPage(page);
+
+    // ----------------- VALIDATION VÀ LƯU (API) -----------------
+
+    const validateCategory = () => {
+        if (!newCategory.name.trim()) {
+            setToastMessage("⚠️ Vui lòng nhập tên danh mục!");
+            setToastType("danger");
+            setShowToast(true);
+            return false;
+        }
+        if (!newCategory.type.trim()) {
+            setToastMessage("⚠️ Vui lòng chọn loại danh mục!");
+            setToastType("danger");
+            setShowToast(true);
+            return false;
+        }
+        return true;
+    };
+
+    const handleSaveCategory = async () => {
+        if (!validateCategory()) return;
+        
+        setIsSaving(true);
+
+        try {
+            if (editingCategory) {
+                // GỌI API CẬP NHẬT
+                await updateCategory(editingCategory.id, newCategory); 
+                setToastMessage("✅ Cập nhật danh mục thành công!");
+                
+            } else {
+                // GỌI API TẠO MỚI
+                await createCategory(newCategory); 
+                setToastMessage("✅ Thêm danh mục thành công!");
+            }
+            
+            // Tải lại dữ liệu sau khi thành công để cập nhật bảng
+            await fetchCategories(); 
+
+            setToastType("success");
+            setShowToast(true);
+            setShowModal(false);
+            setEditingCategory(null);
+            setNewCategory({ name: "", description: "", type: "INDUSTRY" });
+            
+        } catch (error) {
+            console.error("Lỗi khi lưu danh mục:", error);
+            // FIX: Truy xuất thông báo lỗi chi tiết từ server (error.response?.data?.message)
+            const errorMessage = error.response?.data?.message || error.message || 'Không thể lưu danh mục.';
+            setToastMessage(`❌ Lỗi: ${errorMessage}`);
+            setToastType("danger");
+            setShowToast(true);
+        } finally {
+            setIsSaving(false);
+        }
+    };
+
+    const handleEditClick = (category) => {
+        setEditingCategory(category);
+        setNewCategory({ 
+            name: category.name, 
+            description: category.description,
+            // Đảm bảo lấy trường 'type' từ dữ liệu API
+            type: category.type || "INDUSTRY" 
+        }); 
+        setShowModal(true);
+    };
+
+    const handleDeleteCategory = async () => {
+        try {
+            // GỌI API XÓA
+            await deleteCategory(deletingCategoryId); 
+            
+            // Tải lại dữ liệu sau khi xóa thành công
+            await fetchCategories();
+
+            setToastMessage("✅ Xóa danh mục thành công!");
+            setToastType("success");
+            setShowToast(true);
+            
+        } catch (error) {
+            console.error("Lỗi khi xóa danh mục:", error);
+            // FIX: Truy xuất thông báo lỗi chi tiết từ server
+            const errorMessage = error.response?.data?.message || error.message || 'Không thể xóa danh mục.';
+            setToastMessage(`❌ Lỗi xóa: ${errorMessage}`);
+            setToastType("danger");
+            setShowToast(true);
+        } finally {
+            setDeletingCategoryId(null);
+        }
+    };
+
+    // ----------------- HIỂN THỊ UI -----------------
+
+    if (isLoading) {
+        return (
+            <AdminSidebarLayout>
+                <div className="d-flex justify-content-center align-items-center" style={{ height: '50vh' }}>
+                    <Spinner animation="border" role="status" className="me-2" />
+                    <span className="fw-bold">Đang tải dữ liệu danh mục...</span>
+                </div>
+            </AdminSidebarLayout>
+        );
     }
 
-    setToastType("success");
-    setShowToast(true);
-    setShowModal(false);
-    setEditingCategory(null);
-    setNewCategory({ name: "", description: "" });
-  };
+    return (
+        <AdminSidebarLayout>
+            <div className="bg-white p-4 rounded shadow-sm">
+                <h4 className="fw-bold mb-3">📂 Quản lý danh mục công việc</h4>
 
-  const handleEditClick = (category) => {
-    setEditingCategory(category);
-    setNewCategory({ name: category.name, description: category.description });
-    setShowModal(true);
-  };
+                <div className="d-flex justify-content-between align-items-center mb-3">
+                    <input
+                        type="text"
+                        placeholder="🔍 Tìm theo tên danh mục..."
+                        className="form-control w-25"
+                        value={searchTerm}
+                        onChange={(e) => {
+                            setSearchTerm(e.target.value);
+                            setCurrentPage(1);
+                        }}
+                    />
+                    <Button
+                        variant="primary"
+                        onClick={() => {
+                            setEditingCategory(null);
+                            setNewCategory({ name: "", description: "", type: "INDUSTRY" });
+                            setShowModal(true);
+                        }}
+                    >
+                        + Thêm danh mục
+                    </Button>
+                </div>
 
-  const handleDeleteCategory = () => {
-    setCategories(categories.filter(cat => cat.id !== deletingCategoryId));
-    setToastMessage("✅ Xóa danh mục thành công!");
-    setToastType("success");
-    setShowToast(true);
-    setDeletingCategoryId(null);
-  };
+                <Table striped bordered hover responsive>
+                    <thead className="table-dark">
+                        <tr>
+                            <th>ID</th>
+                            <th>Loại</th>
+                            <th>Tên danh mục</th>
+                            <th>Mô tả</th>
+                            <th>Hành động</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {currentCategories.length > 0 ? (
+                            currentCategories.map(cat => (
+                                <tr key={cat.id}>
+                                    <td>{cat.id}</td>
+                                    <td>
+                                        {cat.type === 'INDUSTRY' ? 'Ngành nghề' : 
+                                         cat.type === 'JOB_LEVEL' ? 'Cấp bậc' : 
+                                         cat.type === 'JOB_TYPE' ? 'Loại công việc' : cat.type}
+                                    </td>
+                                    <td>{cat.name}</td>
+                                    <td>{cat.description}</td>
+                                    <td>
+                                        {/* Sử dụng icon Edit (Lucide) */}
+                                        <Button variant="outline-secondary" size="sm" className="me-1" onClick={() => handleEditClick(cat)}>
+                                            <Edit size={16} /> 
+                                        </Button>
+                                        {/* Sử dụng icon Trash2 (Lucide) */}
+                                        <Button variant="outline-danger" size="sm" onClick={() => setDeletingCategoryId(cat.id)}>
+                                            <Trash2 size={16} /> 
+                                        </Button>
+                                    </td>
+                                </tr>
+                            ))
+                        ) : (
+                            <tr>
+                                <td colSpan="5" className="text-center">Không tìm thấy danh mục nào.</td>
+                            </tr>
+                        )}
+                    </tbody>
+                </Table>
 
-  return (
-    <AdminSidebarLayout>
-      <div className="bg-white p-4 rounded shadow-sm">
-        <h4 className="fw-bold mb-3">📂 Quản lý danh mục công việc</h4>
+                {totalPages > 1 && (
+                    <div className="d-flex justify-content-center mt-3">
+                        <Pagination currentPage={currentPage} totalPages={totalPages} onPageChange={handlePageChange} />
+                    </div>
+                )}
 
-        <div className="d-flex justify-content-between align-items-center mb-3">
-          <input
-            type="text"
-            placeholder="🔍 Tìm theo tên danh mục..."
-            className="form-control w-25"
-            value={searchTerm}
-            onChange={(e) => {
-              setSearchTerm(e.target.value);
-              setCurrentPage(1);
-            }}
-          />
-          <Button
-            variant="primary"
-            onClick={() => {
-              setEditingCategory(null);
-              setNewCategory({ name: "", description: "" });
-              setShowModal(true);
-            }}
-          >
-            + Thêm danh mục
-          </Button>
-        </div>
+                {/* Modal thêm/sửa */}
+<Modal show={showModal} onHide={() => setShowModal(false)} centered>
+    <Modal.Header closeButton>
+        <Modal.Title>{editingCategory ? "✏️ Sửa danh mục" : "📁 Thêm danh mục"}</Modal.Title>
+    </Modal.Header>
+    <Modal.Body>
+        <Form>
+            <Form.Group className="mb-2">
+    <Form.Label>Loại Danh mục <span className="text-danger">*</span></Form.Label>
+                {/* FIX: Sử dụng Form.Select để đảm bảo gửi giá trị ENUM hợp lệ */}
+                <Form.Select
+                    value={newCategory.type}
+                    onChange={(e) => setNewCategory({ ...newCategory, type: e.target.value })}
+                    disabled={!!editingCategory} // Vẫn khóa khi chỉnh sửa
+                >
+                    <option value="INDUSTRY">Ngành nghề (INDUSTRY)</option>
+                    <option value="JOB_LEVEL">Cấp bậc (JOB_LEVEL)</option>
+                    <option value="JOB_TYPE">Loại công việc (JOB_TYPE)</option>
+                </Form.Select>
+                <Form.Text className="text-muted">
+                    Loại danh mục này không thể thay đổi sau khi tạo.
+                </Form.Text>
+            </Form.Group>
 
-        <Table striped bordered hover responsive>
-          <thead className="table-dark">
-            <tr>
-              <th>ID</th>
-              <th>Tên danh mục</th>
-              <th>Mô tả</th>
-              <th>Hành động</th>
-            </tr>
-          </thead>
-          <tbody>
-            {currentCategories.map(cat => (
-              <tr key={cat.id}>
-                <td>{cat.id}</td>
-                <td>{cat.name}</td>
-                <td>{cat.description}</td>
-                <td>
-                  <Button variant="outline-secondary" size="sm" className="me-1" onClick={() => handleEditClick(cat)}>
-                    <PencilFill />
-                  </Button>
-                  <Button variant="outline-danger" size="sm" onClick={() => setDeletingCategoryId(cat.id)}>
-                    <TrashFill />
-                  </Button>
-                </td>
-              </tr>
-            ))}
-          </tbody>
-        </Table>
-
-        {totalPages > 1 && (
-          <div className="d-flex justify-content-center mt-3">
-            <Pagination currentPage={currentPage} totalPages={totalPages} onPageChange={handlePageChange} />
-          </div>
-        )}
-
-        {/* Modal thêm/sửa */}
-        <Modal show={showModal} onHide={() => setShowModal(false)} centered>
-          <Modal.Header closeButton>
-            <Modal.Title>{editingCategory ? "✏️ Sửa danh mục" : "📁 Thêm danh mục"}</Modal.Title>
-          </Modal.Header>
-          <Modal.Body>
-            <Form>
-              <Form.Group className="mb-2">
-                <Form.Label>Tên danh mục</Form.Label>
+            {/* <-- INPUT TÊN DANH MỤC  --> */}
+            <Form.Group className="mb-2">
+                <Form.Label>Tên danh mục <span className="text-danger">*</span></Form.Label>
                 <Form.Control
-                  value={newCategory.name}
-                  onChange={(e) => setNewCategory({ ...newCategory, name: e.target.value })}
+                    type="text"
+                    placeholder="Nhập tên danh mục (ví dụ: Công nghệ thông tin)"
+                    value={newCategory.name}
+                    onChange={(e) => setNewCategory({ ...newCategory, name: e.target.value })}
+                    autoFocus
                 />
-              </Form.Group>
-              <Form.Group className="mb-2">
+            </Form.Group>
+
+            <Form.Group className="mb-2">
                 <Form.Label>Mô tả</Form.Label>
                 <Form.Control
-                  as="textarea"
-                  rows={3}
-                  value={newCategory.description}
-                  onChange={(e) => setNewCategory({ ...newCategory, description: e.target.value })}
+                    as="textarea"
+                    rows={3}
+                    value={newCategory.description}
+                    onChange={(e) => setNewCategory({ ...newCategory, description: e.target.value })}
                 />
-              </Form.Group>
-            </Form>
-          </Modal.Body>
-          <Modal.Footer>
-            <Button variant="secondary" onClick={() => setShowModal(false)}>Hủy</Button>
-            <Button variant="success" onClick={handleSaveCategory}>{editingCategory ? "Lưu thay đổi" : "Thêm"}</Button>
-          </Modal.Footer>
-        </Modal>
+            </Form.Group>
+        </Form>
+    </Modal.Body>
+    <Modal.Footer>
+        <Button variant="secondary" onClick={() => setShowModal(false)} disabled={isSaving}>Hủy</Button>
+        <Button variant="success" onClick={handleSaveCategory} disabled={isSaving}>
+            {isSaving ? <Spinner as="span" animation="border" size="sm" role="status" aria-hidden="true" className="me-1" /> : null}
+            {editingCategory ? "Lưu thay đổi" : "Thêm"}
+        </Button>
+    </Modal.Footer>
+</Modal>
 
-        {/* Modal xác nhận xóa */}
-        <Modal show={!!deletingCategoryId} onHide={() => setDeletingCategoryId(null)} centered>
-          <Modal.Header closeButton>
-            <Modal.Title>Xác nhận xóa danh mục</Modal.Title>
-          </Modal.Header>
-          <Modal.Body>Bạn có chắc chắn muốn xóa danh mục này không?</Modal.Body>
-          <Modal.Footer>
-            <Button variant="secondary" onClick={() => setDeletingCategoryId(null)}>Hủy</Button>
-            <Button variant="danger" onClick={handleDeleteCategory}>Xóa</Button>
-          </Modal.Footer>
-        </Modal>
+                {/* Modal xác nhận xóa */}
+                <Modal show={!!deletingCategoryId} onHide={() => setDeletingCategoryId(null)} centered>
+                    <Modal.Header closeButton>
+                        <Modal.Title>Xác nhận xóa danh mục</Modal.Title>
+                    </Modal.Header>
+                    <Modal.Body>Bạn có chắc chắn muốn xóa danh mục ID **{deletingCategoryId}** này không?</Modal.Body>
+                    <Modal.Footer>
+                        <Button variant="secondary" onClick={() => setDeletingCategoryId(null)}>Hủy</Button>
+                        <Button variant="danger" onClick={handleDeleteCategory}>Xóa</Button>
+                    </Modal.Footer>
+                </Modal>
 
-        {/* Toast */}
-        <Toast
-          show={showToast}
-          onClose={() => setShowToast(false)}
-          delay={3000}
-          autohide
-          bg={toastType}
-          style={{ position: "fixed", top: 20, right: 20, zIndex: 9999 }}
-        >
-          <Toast.Header closeButton={false}>
-            <strong className="me-auto text-white">{toastType === "danger" ? "Lỗi" : "Thông báo"}</strong>
-            <button type="button" className="btn-close btn-close-white ms-auto" onClick={() => setShowToast(false)}></button>
-          </Toast.Header>
-          <Toast.Body className="text-white">{toastMessage}</Toast.Body>
-        </Toast>
-      </div>
-    </AdminSidebarLayout>
-  );
+                {/* Toast */}
+                <Toast
+                    show={showToast}
+                    onClose={() => setShowToast(false)}
+                    delay={3000}
+                    autohide
+                    bg={toastType}
+                    style={{ position: "fixed", top: 20, right: 20, zIndex: 9999 }}
+                >
+                    <Toast.Header closeButton={false}>
+                        <strong className={`me-auto text-${toastType === "danger" ? "danger" : "white"}`}>{toastType === "danger" ? "Lỗi" : "Thông báo"}</strong>
+                        <button type="button" className={`btn-close ms-auto ${toastType === "danger" ? "btn-close-dark" : "btn-close-white"}`} onClick={() => setShowToast(false)}></button>
+                    </Toast.Header>
+                    <Toast.Body className={`text-${toastType === "danger" ? "dark" : "white"}`}>{toastMessage}</Toast.Body>
+                </Toast>
+            </div>
+        </AdminSidebarLayout>
+    );
 }

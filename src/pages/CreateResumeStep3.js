@@ -25,8 +25,24 @@ const renderOptions = (start, end, label) => {
             </option>
         );
     }
+    // Đảo ngược để năm gần nhất lên đầu (chỉ áp dụng cho Năm)
+    if (label === "Năm") {
+        return options.reverse();
+    }
     return options;
 };
+
+// Hàm tiện ích: So sánh hai khoảng thời gian (năm-tháng)
+// Thời gian bắt đầu phải nhỏ hơn hoặc bằng thời gian kết thúc
+const isStartDateBeforeEndDate = (startYear, startMonth, endYear, endMonth) => {
+    // Chuyển về dạng số để so sánh (quy đổi về tổng số tháng)
+    const startValue = parseInt(startYear) * 12 + parseInt(startMonth);
+    const endValue = parseInt(endYear) * 12 + parseInt(endMonth);
+
+    // Bắt đầu phải nhỏ hơn hoặc bằng Kết thúc
+    return startValue <= endValue;
+};
+
 
 export default function CreateResumeStep3() {
     const { authToken } = useAuth();
@@ -131,7 +147,7 @@ export default function CreateResumeStep3() {
 
     const handleBack = () => navigate("/create-resume/step2");
 
-    // ==================== LƯU DỮ LIỆU – PHIÊN BẢN AN TOÀN 100% ====================
+    // ==================== LƯU DỮ LIỆU ====================
     const handleSubmit = async (isExiting = false) => {
         setMessage("");
         setError("");
@@ -143,7 +159,7 @@ export default function CreateResumeStep3() {
             return;
         }
 
-        // Validate
+        // 1. Validate cơ bản
         const validEntries = educationList.filter(
             (e) =>
                 e.educationLevel && e.university.trim() && e.major.trim()
@@ -155,10 +171,25 @@ export default function CreateResumeStep3() {
             return;
         }
 
+        // 2. Validate thời gian (Logic MỚI: Bắt đầu <= Kết thúc)
+        for (const entry of validEntries) {
+            // Chỉ kiểm tra nếu cả 4 trường thời gian đều được chọn
+            if (entry.startYear && entry.startMonth && entry.endYear && entry.endMonth) {
+                if (!isStartDateBeforeEndDate(entry.startYear, entry.startMonth, entry.endYear, entry.endMonth)) {
+                    setError(`Mục ${entry.university} bị lỗi: Thời gian Bắt đầu (${entry.startMonth}/${entry.startYear}) phải NHỎ HƠN hoặc BẰNG thời gian Kết thúc (${entry.endMonth}/${entry.endYear})!`);
+                    setLoading(false);
+                    return; // Dừng submit nếu có lỗi
+                }
+            }
+        }
+
+
+        // 3. Format dữ liệu gửi đi
         const educationEntries = validEntries.map((entry) => ({
             educationLevel: entry.educationLevel,
             university: entry.university,
             major: entry.major,
+            // Format ngày tháng thành YYYY-MM-DD (dùng 01 cho ngày)
             startDate:
                 entry.startYear && entry.startMonth
                     ? `${entry.startYear}-${String(entry.startMonth).padStart(2, "0")}-01`
@@ -171,13 +202,13 @@ export default function CreateResumeStep3() {
         }));
 
         try {
-            // 1. Lấy toàn bộ profile hiện tại
+            // 4. Lấy toàn bộ profile hiện tại
             const { data: currentProfile } = await axios.get(
                 "http://localhost:8080/api/profile",
                 { headers: { Authorization: `Bearer ${authToken}` } }
             );
 
-            // 2. Merge + chỉ cập nhật học vấn
+            // 5. Merge + chỉ cập nhật học vấn
             const fullPayload = {
                 ...currentProfile,
                 educationEntries,
@@ -189,7 +220,7 @@ export default function CreateResumeStep3() {
                 skillEntries: currentProfile.skillEntries || [],
             };
 
-            // 3. Gửi lên (dùng endpoint education hoặc endpoint chung đều được)
+            // 6. Gửi lên
             await axios.put(
                 "http://localhost:8080/api/profile/education",
                 fullPayload,
@@ -220,7 +251,18 @@ export default function CreateResumeStep3() {
         }
     };
 
-    // ==================== LOADING ====================
+    // ==================== KHAI BÁO OPTIONS CHO DROP-DOWN NĂM ====================
+    const currentYear = new Date().getFullYear();
+
+    // Năm bắt đầu: Giới hạn từ 1950 đến NĂM HIỆN TẠI (Không cho phép năm bắt đầu trong tương lai)
+    const startYears = renderOptions(1950, currentYear, "Năm");
+
+    // Năm kết thúc: Có thể chọn đến NĂM HIỆN TẠI + 5 (Cho phép các chương trình đang học/tương lai gần)
+    const endYears = renderOptions(1950, currentYear + 5, "Năm");
+
+    const months = renderOptions(1, 12, "Tháng");
+
+    // ==================== LOADING SCREEN ====================
     if (isFetching) {
         return (
             <Container className="d-flex justify-content-center align-items-center" style={{ minHeight: "100vh" }}>
@@ -228,10 +270,6 @@ export default function CreateResumeStep3() {
             </Container>
         );
     }
-
-    const currentYear = new Date().getFullYear();
-    const years = renderOptions(1950, currentYear + 5, "Năm").reverse();
-    const months = renderOptions(1, 12, "Tháng");
 
     // ==================== RENDER ====================
     return (
@@ -279,7 +317,7 @@ export default function CreateResumeStep3() {
                                 </Button>
                             </div>
 
-                            {/* Các field như cũ */}
+                            {/* Trình độ học vấn */}
                             <Col lg={8}>
                                 <Form.Group>
                                     <Form.Label className="fw-semibold">
@@ -303,6 +341,7 @@ export default function CreateResumeStep3() {
                                 </Form.Group>
                             </Col>
 
+                            {/* Tên trường */}
                             <Col lg={8}>
                                 <Form.Group>
                                     <Form.Label className="fw-semibold">
@@ -320,6 +359,7 @@ export default function CreateResumeStep3() {
                                 </Form.Group>
                             </Col>
 
+                            {/* Chuyên ngành */}
                             <Col lg={8}>
                                 <Form.Group>
                                     <Form.Label className="fw-semibold">
@@ -337,6 +377,7 @@ export default function CreateResumeStep3() {
                                 </Form.Group>
                             </Col>
 
+                            {/* Thời gian */}
                             <Col lg={8}>
                                 <Row className="g-3">
                                     <Col md={6}>
@@ -363,7 +404,7 @@ export default function CreateResumeStep3() {
                                                     required
                                                     disabled={loading}
                                                 >
-                                                    {years}
+                                                    {startYears} {/* Đã sửa: dùng startYears (chỉ đến năm hiện tại) */}
                                                 </Form.Select>
                                             </Col>
                                         </Row>
@@ -392,7 +433,7 @@ export default function CreateResumeStep3() {
                                                     required
                                                     disabled={loading}
                                                 >
-                                                    {years}
+                                                    {endYears} {/* Đã sửa: dùng endYears (có thể đến tương lai 5 năm) */}
                                                 </Form.Select>
                                             </Col>
                                         </Row>
@@ -400,6 +441,7 @@ export default function CreateResumeStep3() {
                                 </Row>
                             </Col>
 
+                            {/* Mô tả */}
                             <Col lg={8}>
                                 <Form.Group>
                                     <Form.Label className="fw-semibold">Mô tả (thành tích, GPA...)</Form.Label>

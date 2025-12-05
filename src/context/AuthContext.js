@@ -1,5 +1,3 @@
-// src/context/AuthContext.js
-
 import React, { createContext, useContext, useState, useEffect } from 'react';
 import AuthService from '../services/auth.service';
 
@@ -15,12 +13,24 @@ export const AuthProvider = ({ children }) => {
         setLoading(false);
     }, []);
 
+    // 🔄 HÀM LOGIN ĐÃ CẬP NHẬT: Trích xuất chi tiết user status từ lỗi
     const login = async (email, password) => {
         setLoading(true);
+        // AuthService.login giờ sẽ trả về { success: bool, message: string, user: {status data} }
         const result = await AuthService.login(email, password);
+        
         if (result.success) {
             setCurrentUser(result.user);
+        } else {
+            // 💡 QUAN TRỌNG: Nếu đăng nhập KHÔNG thành công, ta vẫn cần kiểm tra xem
+            // result có chứa thông tin user status (như isLocked, lockReason) 
+            // được Backend gửi kèm trong lỗi 403 hay không.
+            // Nếu có, LoginPage sẽ dùng thông tin này để hiển thị thông báo chi tiết.
+            
+            // Đảm bảo không lưu user vào state nếu login thất bại
+            setCurrentUser(null); 
         }
+
         setLoading(false);
         return result;
     };

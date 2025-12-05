@@ -22,12 +22,14 @@ db.Employer = require('./employer.model')(sequelize, DataTypes);
 db.Job = require('./job.model')(sequelize, DataTypes); 
 db.JobApplication = require('./jobApplication.model')(sequelize, DataTypes); 
 db.Report = require('./report.model')(sequelize, DataTypes);
-db.Complaint = require('./complaint.model')(sequelize, DataTypes);
 
-// 🎯 THÊM MODEL SAVED JOB
+
+// 🎯 ĐÃ THÊM MODEL CATEGORY
+db.Category = require('./category.model')(sequelize, DataTypes); 
+
 db.SavedJob = require('./savedJob.model')(sequelize, DataTypes); 
 
-// --- MODELS PHỤ CHO STUDENT PROFILE (9 BƯỚC) ---
+// --- MODELS PHỤ CHO STUDENT PROFILE ---
 db.Education = require('./education.model')(sequelize, DataTypes); 
 db.Language = require('./language.model')(sequelize, DataTypes);
 db.Experience = require('./experience.model')(sequelize, DataTypes);
@@ -52,6 +54,17 @@ db.Employer.belongsTo(db.User, { foreignKey: 'userId', as: 'user' });
 db.Employer.hasMany(db.Job, { foreignKey: 'employerId', as: 'jobs' });
 db.Job.belongsTo(db.Employer, { foreignKey: 'employerId', as: 'employer' });
 
+// 🎯 QUAN HỆ CATEGORY/JOB
+// Thiết lập mối quan hệ từ bảng Job đến Category cho 3 loại danh mục khác nhau (industry, level, type)
+db.Category.hasMany(db.Job, { foreignKey: 'industryId', as: 'jobsInIndustry' });
+db.Job.belongsTo(db.Category, { foreignKey: 'industryId', as: 'industryCategory' });
+
+db.Category.hasMany(db.Job, { foreignKey: 'jobLevelId', as: 'jobsInLevel' });
+db.Job.belongsTo(db.Category, { foreignKey: 'jobLevelId', as: 'jobLevelCategory' });
+
+db.Category.hasMany(db.Job, { foreignKey: 'jobTypeId', as: 'jobsOfType' });
+db.Job.belongsTo(db.Category, { foreignKey: 'jobTypeId', as: 'jobTypeCategory' });
+
 // --- Quan hệ JOB/APPLICATION/STUDENT ---
 db.Job.hasMany(db.JobApplication, { foreignKey: 'jobId', as: 'applications' });
 db.JobApplication.belongsTo(db.Job, { foreignKey: 'jobId', as: 'job' });
@@ -59,20 +72,16 @@ db.JobApplication.belongsTo(db.Job, { foreignKey: 'jobId', as: 'job' });
 db.Student.hasMany(db.JobApplication, { foreignKey: 'studentId', as: 'applications' });
 db.JobApplication.belongsTo(db.Student, { foreignKey: 'studentId', as: 'student' });
 
-// --- Quan hệ REPORT/COMPLAINT/USER ---
 db.User.hasMany(db.Report, { foreignKey: 'userId', as: 'reports' });
 db.Report.belongsTo(db.User, { foreignKey: 'userId', as: 'user' });
 
-db.User.hasMany(db.Complaint, { foreignKey: 'userId', as: 'complaints' });
-db.Complaint.belongsTo(db.User, { foreignKey: 'userId', as: 'user' });
 
-// --- QUAN HỆ SAVED JOBS (MỚI) ---
+
+// --- QUAN HỆ SAVED JOBS ---
 db.Student.hasMany(db.SavedJob, { foreignKey: 'studentId', as: 'savedJobs', onDelete: 'CASCADE' });
 db.SavedJob.belongsTo(db.Student, { foreignKey: 'studentId', as: 'student' });
 
-// Job có thể được lưu nhiều lần
 db.Job.hasMany(db.SavedJob, { foreignKey: 'jobId', as: 'savedByStudents', onDelete: 'CASCADE' });
-// 🎯 DÙNG ALIAS 'Job' để khớp với Controller
 db.SavedJob.belongsTo(db.Job, { foreignKey: 'jobId', as: 'Job' }); 
 
 
@@ -97,7 +106,11 @@ db.Reference.belongsTo(db.Student, { foreignKey: 'studentId', as: 'student' });
 db.Student.hasMany(db.Skill, { foreignKey: 'studentId', as: 'skills', onDelete: 'CASCADE' });
 db.Skill.belongsTo(db.Student, { foreignKey: 'studentId', as: 'student' });
 
-// B8: Ngành nghề mong muốn
+// B8: Ngành nghề mong muốn (DesiredIndustry) 
+// -> Liên kết DesiredIndustry với Category (Ngành nghề)
+db.Category.hasMany(db.DesiredIndustry, { foreignKey: 'categoryId', as: 'desiredByStudents' });
+db.DesiredIndustry.belongsTo(db.Category, { foreignKey: 'categoryId', as: 'category' }); 
+
 db.Student.hasMany(db.DesiredIndustry, { foreignKey: 'studentId', as: 'desiredIndustries', onDelete: 'CASCADE' });
 db.DesiredIndustry.belongsTo(db.Student, { foreignKey: 'studentId', as: 'student' });
 

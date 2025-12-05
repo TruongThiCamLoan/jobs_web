@@ -14,6 +14,8 @@ export { default as JobSearchPage } from "./JobSearchPage";
 export { default as EmployersPage } from "./EmployersPage";
 export { default as UploadResumePage } from "./UploadResumePage";
 export { default as AccountPage } from "./AccountPage";
+export { default as ChangePasswordPage } from "./ChangePasswordPage";
+export { default as EmailNotificationPage } from "./EmailNotificationPage";
 
 export { default as CreateResumeStep1 } from "./CreateResumeStep1";
 export { default as CreateResumeStep2 } from "./CreateResumeStep2"; 

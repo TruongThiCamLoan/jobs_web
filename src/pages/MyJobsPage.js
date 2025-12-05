@@ -130,7 +130,7 @@ export default function MyJobsPage() {
                       <Nav className="flex-wrap small gap-5">
                           {/* 1. MY CAREERLINK */}
                           <Nav.Link as={Link} to="/myjobs" className="text-primary fw-semibold border-bottom border-primary border-3 pb-1">
-                              <Briefcase size={14} className="me-1" /> My CareerLink
+                              <Briefcase size={14} className="me-1" /> My Jobs
                           </Nav.Link>
                           
                           {/* 2. HỒ SƠ XIN VIỆC (ĐANG ACTIVE LÀ MỤC CON: Tải hồ sơ lên) */}
@@ -275,7 +275,7 @@ export default function MyJobsPage() {
                                 <ArrowRight size={48} className="text-primary" />
                             </div>
                             <p className="text-muted">Không có việc ứng tuyển gần đây</p>
-                            <Button variant="outline-primary">Đến trang tìm việc</Button>
+                            <Button variant="outline-primary" as={Link} to="/jobs/search">Đến trang tìm việc</Button>
                         </div>
 
                         {/* GỢI Ý VIỆC LÀM */}
@@ -403,12 +403,12 @@ export default function MyJobsPage() {
                 </Row>
             </Container>
 
-            {/* ZALO BUTTON */}
+            {/* ZALO BUTTON
             <div className="position-fixed bottom-0 end-0 p-3">
                 <a href="#" className="btn btn-primary rounded-circle shadow-lg" style={{ width: 50, height: 50 }}>
                     <img src="https://img.icons8.com/color/48/000000/zalo.png" alt="Zalo" />
                 </a>
-            </div>
+            </div> */}
         </div>
     );
 }

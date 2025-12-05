@@ -1,28 +1,31 @@
-// src/pages/JobDetailPage.js
 import React, { useState, useEffect, useCallback } from "react";
-import { Container, Row, Col, Card, Button, Tab, Nav, Alert, Badge, Spinner } from "react-bootstrap";
-import { Link, useParams } from "react-router-dom";
-import { 
-    Heart, HeartFill, GeoAltFill, Globe,
-    CheckCircleFill, ExclamationTriangleFill, TagFill
-} from "react-bootstrap-icons"; 
+// SỬ DỤNG ICON LUCIDE-REACT ĐỂ TRÁNH LỖI BIÊN DỊCH VỚI react-bootstrap-icons
+import { Heart, Globe, CheckCircle, AlertTriangle, Tag, Flag, X } from 'lucide-react';
+import { Container, Row, Col, Card, Button, Tab, Nav, Alert, Badge, Spinner, Modal } from "react-bootstrap";
+// ĐÃ LOẠI BỎ: import 'bootstrap/dist/css/bootstrap.min.css'; // Gây lỗi biên dịch
 import axios from "axios"; 
+import { useParams, Link } from "react-router-dom"; 
 
+// ====================================================================
+// KHÔI PHỤC IMPORTS GỐC CỦA DỰ ÁN BẠN
+// ====================================================================
 import AppNavbar from "../components/Navbar"; 
 import JobService from "../services/job.service"; // Dịch vụ lấy chi tiết công việc
 import { useAuth } from "../context/AuthContext";
 import "./style.css"; 
 import logoPlaceholder from "../img/Banner.jpg"; 
 
-// Định nghĩa các thuộc tính chi tiết (Giữ nguyên)
+
+// Định nghĩa các thuộc tính chi tiết (FIXED: Trỏ tới Association mới)
 const DETAIL_ATTRIBUTES = [
-    { label: "Loại công việc", key: "jobType", default: "Toàn thời gian" },
-    { label: "Cấp bậc", key: "jobLevel", default: "Nhân viên" },
+    { label: "Loại công việc", key: "jobTypeCategory.name", default: "Toàn thời gian" },
+    { label: "Cấp bậc", key: "jobLevelCategory.name", default: "Nhân viên" },
+    { label: "Ngành nghề", key: "industryCategory.name", default: "Kinh doanh" },
+    
     { label: "Giới tính", key: "gender", default: "Không yêu cầu" },
-    { label: "Học vấn", key: "academicLevel", default: "Đại học" }, 
-    { label: "Kinh nghiệm", key: "experience", default: "1 năm" },
-    { label: "Thời gian", key: "workingHours", default: "Thứ 2 - Thứ 6" }, 
-    { label: "Ngành nghề", key: "industry", default: "Kinh doanh" },
+    { label: "Học vấn", "key": "academicLevel", default: "Đại học" }, 
+    { label: "Kinh nghiệm", "key": "experience", default: "1 năm" },
+    { label: "Thời gian", "key": "workingHours", default: "Thứ 2 - Thứ 6" }, 
 ];
 
 // Hàm helper (Giữ nguyên)
@@ -31,6 +34,19 @@ const getValueOrDefault = (value, defaultValue = '—') => {
     if (typeof value === 'string' && value.trim() === '') { return defaultValue; }
     if (value === 0 && defaultValue === '—') { return 0; }
     return value;
+};
+
+// FIX: Hàm lấy giá trị lồng (nested) từ object (CẦN THIẾT cho Association.name)
+const getNestedValue = (obj, path, defaultValue = '—') => {
+    const parts = path.split('.');
+    let current = obj;
+    for (const part of parts) {
+        if (!current || !current.hasOwnProperty(part)) {
+            return defaultValue;
+        }
+        current = current[part];
+    }
+    return getValueOrDefault(current, defaultValue);
 };
 
 // Hàm định dạng ngày tháng (Giữ nguyên)
@@ -54,25 +70,25 @@ export default function JobDetailPage() {
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState(null);
     
-    // States cho UI và Alert
     const [alertMessage, setAlertMessage] = useState(null); 
     
-    // STATES CHO ỨNG TUYỂN
     const [isApplying, setIsApplying] = useState(false);
     const [applyStatus, setApplyStatus] = useState(null); 
     const [hasApplied, setHasApplied] = useState(false); 
 
-    // STATES CHO LƯU
     const [isSaved, setIsSaved] = useState(false);
     const [isSaving, setIsSaving] = useState(false);
 
+    const [showReportModal, setShowReportModal] = useState(false);
+    const [reportReason, setReportReason] = useState("");
+    const [isReporting, setIsReporting] = useState(false);
 
     // 1. Kiểm tra trạng thái đã ứng tuyển trước đó
     const checkApplicationStatus = useCallback(async () => {
         if (!authToken || !jobId) return;
 
         try {
-            // ENDPOINT: GET /api/applications/:jobId/status
+            // SỬ DỤNG AXIOS GỐC
             const response = await axios.get(`http://localhost:8080/api/applications/${jobId}/status`, {
                 headers: { Authorization: `Bearer ${authToken}` },
             });
@@ -94,11 +110,13 @@ export default function JobDetailPage() {
             return;
         }
         try {
+            // SỬ DỤNG AXIOS GỐC
             const response = await axios.get("http://localhost:8080/api/saved-jobs", {
                 headers: { Authorization: `Bearer ${authToken}` },
             });
             
-            const jobIds = response.data.map(j => j.jobId.toString());
+            // Giả định API /saved-jobs trả về mảng các đối tượng chứa jobId
+            const jobIds = response.data.map(j => j.jobId.toString()); 
             setIsSaved(jobIds.includes(jobId));
         } catch (e) {
             console.error("Failed to check saved status:", e);
@@ -117,7 +135,7 @@ export default function JobDetailPage() {
         setAlertMessage(null);
 
         try {
-            // ENDPOINT: POST /api/saved-jobs/toggle-save/:jobId
+            // SỬ DỤNG AXIOS GỐC
             const endpoint = `http://localhost:8080/api/saved-jobs/toggle-save/${jobId}`;
             await axios.post(endpoint, {}, { headers: { Authorization: `Bearer ${authToken}` } });
 
@@ -139,7 +157,6 @@ export default function JobDetailPage() {
     const handleApply = async () => {
         setAlertMessage(null);
 
-        // 1. Kiểm tra điều kiện
         if (!authToken || !currentUser) {
             return setAlertMessage({ variant: "danger", message: "Vui lòng đăng nhập để ứng tuyển." });
         }
@@ -153,14 +170,11 @@ export default function JobDetailPage() {
         setIsApplying(true); 
 
         try {
-            // 2. Gọi API ứng tuyển thực tế
-            // ENDPOINT: POST /api/applications/:jobId
-            // Giả định: Nộp đơn với resumeId=1 (Hồ sơ mặc định)
+            // SỬ DỤNG AXIOS GỐC
             const response = await axios.post(`http://localhost:8080/api/applications/${jobId}`, { resumeId: 1 }, { 
                 headers: { Authorization: `Bearer ${authToken}` },
             });
             
-            // 3. Xử lý thành công
             setApplyStatus("success");
             setHasApplied(true);
             setAlertMessage({ variant: "success", message: response.data.message || "Ứng tuyển thành công!" });
@@ -179,12 +193,45 @@ export default function JobDetailPage() {
         }
     };
 
+    const handleReportJob = async () => {
+    if (!authToken) {
+        return setAlertMessage({ variant: "danger", message: "Vui lòng đăng nhập để báo cáo công việc." });
+    }
+    if (!reportReason || reportReason.length < 10) {
+        return setAlertMessage({ variant: "warning", message: "Vui lòng cung cấp lý do báo cáo chi tiết (tối thiểu 10 ký tự)." });
+    }
+    
+    setIsReporting(true);
+    setAlertMessage(null);
+
+    try {
+        // Thay thế URL này bằng endpoint API thực tế của bạn
+        const endpoint = `http://localhost:8080/api/reports/job/${jobId}`;
+        await axios.post(endpoint, { reason: reportReason }, { 
+            headers: { Authorization: `Bearer ${authToken}` },
+        });
+        
+        setAlertMessage({ variant: "success", message: "✅ Báo cáo của bạn đã được gửi đến Admin để xử lý!" });
+        setShowReportModal(false);
+        setReportReason(""); // Reset lý do
+    } catch (error) {
+        console.error("Lỗi khi báo cáo công việc:", error.response || error);
+        const errorMessage = error.response?.data?.message || "Lỗi: Không thể gửi báo cáo.";
+        setAlertMessage({ variant: "danger", message: errorMessage });
+    } finally {
+        setIsReporting(false);
+    }
+};
 
     // Load job detail khi component mount hoặc jobId thay đổi
     useEffect(() => {
         const load = async () => {
             try {
-                const jobData = await JobService.getJobDetail(jobId);
+                // SỬ DỤNG JobService GỐC
+                const response = await JobService.getJobDetail(jobId); 
+                // Cần đảm bảo JobService trả về data thuần túy, hoặc trích xuất response.data ở đây.
+                // Giữ lại logic trích xuất response.data để tương thích với các bước sửa lỗi trước đó.
+                const jobData = response.data || response; 
                 
                 let tagsArray = [];
                 if (jobData.tags) {
@@ -211,7 +258,6 @@ export default function JobDetailPage() {
             }
             setLoading(false);
             
-            // Kiểm tra trạng thái ứng tuyển và lưu sau khi tải Job
             checkApplicationStatus();
             checkSavedStatus();
         };
@@ -224,7 +270,7 @@ export default function JobDetailPage() {
             <>
                 <AppNavbar />
                 <div className="text-center p-5 pt-5 mt-5">
-                    <div className="spinner-border text-primary"></div>
+                    <Spinner animation="border" className="text-primary"></Spinner>
                     <p className="mt-2">Đang tải thông tin...</p>
                 </div>
             </>
@@ -244,15 +290,18 @@ export default function JobDetailPage() {
     const jobSalary = getValueOrDefault(job.salary, 'Thương lượng');
     const jobExperience = getValueOrDefault(job.experience, 'Đang cập nhật');
     const jobGender = getValueOrDefault(job.gender, 'Không yêu cầu');
-    const jobLevel = getValueOrDefault(job.jobLevel, 'Nhân viên');
-    const jobType = getValueOrDefault(job.jobType, 'Toàn thời gian');
+    
+    // FIX: Lấy tên danh mục từ các Association mới bằng hàm getNestedValue
+    const jobLevel = getNestedValue(job, 'jobLevelCategory.name', 'Nhân viên');
+    const jobType = getNestedValue(job, 'jobTypeCategory.name', 'Toàn thời gian');
+    const jobIndustry = getNestedValue(job, 'industryCategory.name', 'Kinh doanh');
 
     return (
         <div className="bg-light">
             <AppNavbar />
 
             {/* ======================= BANNER TOP ======================= */}
-            <div className="job-header-bg border-bottom mt-5">
+            <div className="job-header-bg border-bottom mt-5" style={{ padding: '2rem 0' }}>
                 <Container className="py-4">
 
                     {/* Breadcrumb */}
@@ -265,11 +314,31 @@ export default function JobDetailPage() {
                     <Row>
                         {/* Left: Title + Company */}
                         <Col lg={8}>
-                             {/* ... (Job title and company info) ... */}
+                             <h2 className="fw-bold text-primary">{job.title}</h2>
+                            <h5 className="text-muted">{employer.companyName}</h5>
+                            <div className="d-flex align-items-center small text-muted mt-2">
+                                <Globe size={16} className="me-2" /> Ngành: {jobIndustry}
+                            </div>
                         </Col>
+                        
 
                         {/* Right: Buttons */}
                         <Col lg={4} className="text-lg-end mt-3 mt-lg-0">
+                        <Button
+                            variant="outline-warning"
+                            size="sm"
+                            onClick={() => { 
+                                if (authToken) {
+                                    setShowReportModal(true);
+                                } else {
+                                    setAlertMessage({ variant: "danger", message: "Vui lòng đăng nhập để báo cáo công việc." });
+                                }
+                            }}
+                            className="me-3 px-3 fw-semibold small"
+                            disabled={!authToken || isReporting}
+                        >
+                            <Flag size={14} className="me-1" /> Báo cáo
+                        </Button>
                             {/* NÚT NỘP ĐƠN NGAY */}
                             <Button
                                 variant={hasApplied ? "success" : "primary"}
@@ -280,7 +349,7 @@ export default function JobDetailPage() {
                                 {isApplying ? (
                                     <Spinner animation="border" size="sm" className="me-2" />
                                 ) : hasApplied ? (
-                                    <><CheckCircleFill className="me-2" />Đã nộp</>
+                                    <><CheckCircle size={16} className="me-2" />Đã nộp</>
                                 ) : (
                                     "Nộp đơn ngay"
                                 )}
@@ -293,13 +362,15 @@ export default function JobDetailPage() {
                                 disabled={isSaving || !authToken} 
                                 title={isSaved ? "Bỏ lưu" : "Lưu việc làm"}
                             >
-                                {isSaving ? <Spinner animation="border" size="sm" /> : (isSaved ? <HeartFill /> : <Heart />)}
+                                {isSaving ? <Spinner animation="border" size="sm" /> : (isSaved ? <Heart size={16} /> : <Heart size={16} />)}
                             </Button>
 
                             {alertMessage &&
                                 <Alert
                                     variant={alertMessage.variant}
                                     className="mt-2 small text-center"
+                                    onClose={() => setAlertMessage(null)} // Thêm hàm đóng Alert
+                                    dismissible // Cho phép đóng Alert
                                 >
                                     {alertMessage.message}
                                 </Alert>
@@ -345,7 +416,7 @@ export default function JobDetailPage() {
 
                                     <Col md={4}>
                                         <div className="text-muted">Cấp bậc</div>
-                                        <div className="fw-semibold">{jobLevel}</div>
+                                        <div className="fw-semibold">{jobLevel}</div> 
                                     </Col>
 
                                     <Col md={4}>
@@ -393,8 +464,8 @@ export default function JobDetailPage() {
                                                         <Card className="p-2 border-0 bg-light">
                                                             <div className="fw-bold">{detail.label}</div>
                                                             <div className="text-muted">
-                                                                {/* SỬ DỤNG HÀM getValueOrDefault NGAY TRONG RENDER */}
-                                                                {getValueOrDefault(job[detail.key], detail.default)}
+                                                                {/* SỬ DỤNG getNestedValue CHO CÁC TRƯỜNG ASSOCIATION */}
+                                                                {getNestedValue(job, detail.key, detail.default)}
                                                             </div>
                                                         </Card>
                                                     </Col>
@@ -407,7 +478,7 @@ export default function JobDetailPage() {
                                         <Tab.Pane eventKey="quyenloi">
                                             <h6 className="fw-bold mb-2">Quyền lợi</h6>
                                             <div style={{ whiteSpace: "pre-line", lineHeight: 1.7 }}>
-                                                {job.benefits}
+                                                {job.benefits || "Đang cập nhật phúc lợi."}
                                             </div>
                                         </Tab.Pane>
 
@@ -420,7 +491,7 @@ export default function JobDetailPage() {
                         {/* ==== TAGS ===== */}
                         <Card className="border mb-4">
                             <Card.Body className="small">
-                                <h6 className="fw-bold mb-2"><TagFill className="me-2" />Từ khóa</h6>
+                                <h6 className="fw-bold mb-2"><Tag size={16} className="me-2" />Từ khóa</h6>
                                 <div className="d-flex flex-wrap gap-2">
                                     {/* Chắc chắn job.tags là một mảng trước khi map */}
                                     {(job.tags && Array.isArray(job.tags) ? job.tags : []).map((t, i) => (
@@ -434,7 +505,7 @@ export default function JobDetailPage() {
 
                         {/* ==== CẢNH BÁO ===== */}
                         <Alert variant="warning" className="small d-flex">
-                            <ExclamationTriangleFill className="me-2 mt-1" />
+                            <AlertTriangle size={16} className="me-2 mt-1" />
                             <div>
                                 KHÔNG chuyển bất kỳ khoản phí nào cho nhà tuyển dụng. Hãy cảnh giác nếu thấy dấu hiệu lừa đảo.
                             </div>
@@ -449,7 +520,7 @@ export default function JobDetailPage() {
                         <Card className="border mb-4 sticky-top" style={{ top: '80px', zIndex: 1 }}>
                             <Card.Body className="text-center">
                                 <img
-                                    src={employer.logoUrl || logoPlaceholder}
+                                    src={employer.logoUrl || "https://placehold.co/90x90/ccc/white?text=Logo"}
                                     style={{ width: 90, height: 90, objectFit: "contain" }}
                                     className="border rounded p-2 bg-white"
                                 />
@@ -464,7 +535,7 @@ export default function JobDetailPage() {
                                     className="btn btn-outline-primary w-100 btn-sm"
                                     disabled={!employer.website || employer.website === '—'}
                                 >
-                                    <Globe className="me-2" /> Website
+                                    <Globe size={16} className="me-2" /> Website
                                 </a>
 
                                 <Button
@@ -511,6 +582,44 @@ export default function JobDetailPage() {
 
                 </Row>
             </Container>
+            <Modal show={showReportModal} onHide={() => setShowReportModal(false)} centered>
+    <Modal.Header closeButton>
+        <Modal.Title className="fw-bold small d-flex align-items-center">
+            <Flag size={20} className="me-2 text-warning"/> Báo cáo tin tuyển dụng
+        </Modal.Title>
+    </Modal.Header>
+    <Modal.Body className="small">
+        <p>Vui lòng cho chúng tôi biết lý do bạn muốn báo cáo công việc **{job?.title}** của công ty **{employer.companyName}**.</p>
+        
+        <div className="form-group mb-3">
+            <label className="fw-semibold mb-1">Lý do báo cáo:</label>
+            <textarea
+                className="form-control"
+                rows="4"
+                value={reportReason}
+                onChange={(e) => setReportReason(e.target.value)}
+                placeholder="Ví dụ: Công việc có dấu hiệu lừa đảo, thông tin sai lệch, hoặc yêu cầu thu phí..."
+                disabled={isReporting}
+            ></textarea>
+            <small className="text-muted">Tối thiểu 10 ký tự.</small>
+        </div>
+
+        {alertMessage && alertMessage.variant !== 'success' && (
+            <Alert variant={alertMessage.variant} className="small">
+                {alertMessage.message}
+            </Alert>
+        )}
+    </Modal.Body>
+    <Modal.Footer>
+        <Button variant="secondary" onClick={() => setShowReportModal(false)} disabled={isReporting}>
+            <X size={16} className="me-1" /> Hủy
+        </Button>
+        <Button variant="warning" onClick={handleReportJob} disabled={isReporting || reportReason.length < 10}>
+            {isReporting ? <Spinner animation="border" size="sm" className="me-2" /> : <Flag size={16} className="me-1" />}
+            Gửi báo cáo
+        </Button>
+    </Modal.Footer>
+</Modal>
 
             {/* FOOTER */}
             <footer className="py-4 border-top text-center small text-muted bg-white">

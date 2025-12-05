@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useCallback } from "react";
 import {
     Container,
     Form,
@@ -15,6 +15,36 @@ import axios from "axios";
 import { useAuth } from "../context/AuthContext";
 import AppNavbar from "../components/Navbar";
 import "./style1-9.css";
+
+// Tạo options cho tháng/năm
+const renderOptions = (start, end, label) => {
+    const options = [<option key="default" value="">{label}</option>];
+    for (let i = start; i <= end; i++) {
+        options.push(
+            <option key={i} value={i}>
+                {String(i).padStart(2, "0")}
+            </option>
+        );
+    }
+    // Đảo ngược để năm gần nhất lên đầu (chỉ áp dụng cho Năm)
+    if (label === "Năm") {
+        return options.reverse();
+    }
+    return options;
+};
+
+// Hàm tiện ích: So sánh hai khoảng thời gian (năm-tháng)
+// Thời gian bắt đầu phải nhỏ hơn hoặc bằng thời gian kết thúc
+const isStartDateBeforeEndDate = (startYear, startMonth, endYear, endMonth) => {
+    // Chuyển về dạng số để so sánh (quy đổi về tổng số tháng)
+    // Month 01 = 1, Year 2024 = 2024*12 + 1 = 24289
+    const startValue = parseInt(startYear) * 12 + parseInt(startMonth);
+    const endValue = parseInt(endYear) * 12 + parseInt(endMonth);
+
+    // Bắt đầu phải nhỏ hơn hoặc bằng Kết thúc
+    return startValue <= endValue;
+};
+
 
 // Hàm tiện ích để tạo entry rỗng mặc định
 const createEmptyExperience = () => ({
@@ -179,13 +209,47 @@ export default function CreateResumeStep5() {
             return `${y}-${m}-01`;
         };
 
-        // Lọc bỏ các dòng trống hoàn toàn (công ty, chức danh, mô tả đều trống)
+        // Lọc bỏ các dòng trống hoàn toàn
         const validExperiences = experiences.filter(
             (exp) =>
                 exp.company.trim() !== "" ||
                 exp.position.trim() !== "" ||
                 exp.description.trim() !== ""
         );
+
+        if (validExperiences.length === 0) {
+            setError("Vui lòng nhập ít nhất một mục kinh nghiệm hợp lệ!");
+            setLoading(false);
+            return;
+        }
+
+        // ==================== LOGIC MỚI: KIỂM TRA THỜI GIAN ====================
+        for (const exp of validExperiences) {
+            if (!exp.isCurrent) {
+                // Yêu cầu bắt buộc phải có ngày bắt đầu và ngày kết thúc cho công việc đã nghỉ
+                if (!exp.startYear || !exp.startMonth || !exp.endYear || !exp.endMonth) {
+                    setError(`Kinh nghiệm tại ${exp.company} bị thiếu ngày Bắt đầu hoặc Kết thúc. Vui lòng nhập đủ 4 trường tháng/năm.`);
+                    setLoading(false);
+                    return;
+                }
+                
+                // Kiểm tra logic Bắt đầu <= Kết thúc
+                if (!isStartDateBeforeEndDate(exp.startYear, exp.startMonth, exp.endYear, exp.endMonth)) {
+                    setError(`Kinh nghiệm tại ${exp.company} bị lỗi: Thời gian Bắt đầu (${exp.startMonth}/${exp.startYear}) phải NHỎ HƠN hoặc BẰNG thời gian Kết thúc (${exp.endMonth}/${exp.endYear})!`);
+                    setLoading(false);
+                    return;
+                }
+            } else {
+                // Yêu cầu bắt buộc phải có ngày bắt đầu cho công việc hiện tại
+                if (!exp.startYear || !exp.startMonth) {
+                    setError(`Kinh nghiệm hiện tại tại ${exp.company} bị thiếu ngày Bắt đầu.`);
+                    setLoading(false);
+                    return;
+                }
+            }
+        }
+        // ==================== KẾT THÚC LOGIC KIỂM TRA ====================
+
 
         // Chuẩn bị payload
         const payload = {
@@ -247,6 +311,14 @@ export default function CreateResumeStep5() {
     };
 
     const handleBack = () => navigate("/create-resume/step4");
+
+    // ==================== KHAI BÁO OPTIONS CHO DROP-DOWN NĂM ====================
+    // Năm bắt đầu: Giới hạn từ 1950 đến NĂM HIỆN TẠI (Không cho phép năm bắt đầu trong tương lai)
+    const startYears = renderOptions(1950, currentYear, "Năm");
+
+    // Năm kết thúc: Có thể chọn đến NĂM HIỆN TẠI + 5 (Cho phép các chương trình đang học/tương lai gần)
+    const endYears = renderOptions(1950, currentYear + 5, "Năm");
+    const months = renderOptions(1, 12, "Tháng");
 
     if (isFetching) {
         return (
@@ -427,11 +499,7 @@ export default function CreateResumeStep5() {
                                                     }
                                                 >
                                                     <option value="">-- Tháng --</option>
-                                                    {Array.from({ length: 12 }, (_, i) => (
-                                                        <option key={i} value={i + 1}>
-                                                            Tháng {i + 1}
-                                                        </option>
-                                                    ))}
+                                                    {months}
                                                 </Form.Select>
                                             </Col>
                                             <Col xs={6}>
@@ -446,14 +514,7 @@ export default function CreateResumeStep5() {
                                                     }
                                                 >
                                                     <option value="">-- Năm --</option>
-                                                    {Array.from({ length: 30 }, (_, i) => {
-                                                        const year = currentYear - i;
-                                                        return (
-                                                            <option key={year} value={year}>
-                                                                {year}
-                                                            </option>
-                                                        );
-                                                    })}
+                                                    {startYears} {/* Giới hạn không quá năm hiện tại */}
                                                 </Form.Select>
                                             </Col>
                                         </Row>
@@ -480,11 +541,7 @@ export default function CreateResumeStep5() {
                                                     disabled={exp.isCurrent}
                                                 >
                                                     <option value="">-- Tháng --</option>
-                                                    {Array.from({ length: 12 }, (_, i) => (
-                                                        <option key={i} value={i + 1}>
-                                                            Tháng {i + 1}
-                                                        </option>
-                                                    ))}
+                                                    {months}
                                                 </Form.Select>
                                             </Col>
 
@@ -501,14 +558,7 @@ export default function CreateResumeStep5() {
                                                     disabled={exp.isCurrent}
                                                 >
                                                     <option value="">-- Năm --</option>
-                                                    {Array.from({ length: 30 }, (_, i) => {
-                                                        const year = currentYear - i;
-                                                        return (
-                                                            <option key={year} value={year}>
-                                                                {year}
-                                                            </option>
-                                                        );
-                                                    })}
+                                                    {endYears} {/* Cho phép năm tương lai nếu đang làm */}
                                                 </Form.Select>
                                             </Col>
 

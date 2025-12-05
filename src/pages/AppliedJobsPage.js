@@ -103,9 +103,9 @@ export default function AppliedJobsPage() {
                    <Container>
                        {/* THÊM GAP-3 ĐỂ CÁC MỤC GẦN NHAU HƠN */}
                        <Nav className="flex-wrap small gap-5">
-                           {/* 1. MY CAREERLINK */}
+                           {/* 1. My Jobs */}
                            <Nav.Link as={Link} to="/myjobs" className="text-dark py-1">
-                               <Briefcase size={14} className="me-1" /> My CareerLink
+                               <Briefcase size={14} className="me-1" /> My Jobs
                            </Nav.Link>
                            
                            {/* 2. HỒ SƠ XIN VIỆC (ĐANG ACTIVE LÀ MỤC CON: Tải hồ sơ lên) */}
@@ -276,12 +276,12 @@ export default function AppliedJobsPage() {
                 </Row>
             </Container>
 
-            {/* ZALO BUTTON */}
+            {/* ZALO BUTTON
             <div className="position-fixed bottom-0 end-0 p-3">
                 <a href="#" className="btn btn-primary rounded-circle shadow-lg" style={{ width: 50, height: 50 }}>
                     <img src="https://img.icons8.com/color/48/000000/zalo.png" alt="Zalo" />
                 </a>
-            </div>
+            </div> */}
         </div>
     );
 }
