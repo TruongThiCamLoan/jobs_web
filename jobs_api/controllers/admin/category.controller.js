@@ -5,7 +5,8 @@ const catchAsync = require('../../utils/catchAsync');
 const AppError = require('../../utils/appError');
 
 // Danh sách các loại danh mục hợp lệ
-const VALID_TYPES = ['INDUSTRY', 'JOB_LEVEL', 'JOB_TYPE'];
+// ⭐ ĐÃ CẬP NHẬT: Thêm SALARY và EXPERIENCE
+const VALID_TYPES = ['INDUSTRY', 'JOB_LEVEL', 'JOB_TYPE', 'SALARY', 'EXPERIENCE'];
 
 /**
  * Hàm kiểm tra và chuẩn hóa loại danh mục
@@ -46,32 +47,69 @@ exports.createCategory = catchAsync(async (req, res, next) => {
 
 // ----------------- 2. Lấy tất cả Danh mục (Read All) -----------------
 exports.getAllCategories = catchAsync(async (req, res, next) => {
-    const { type: rawType } = req.query; // Lọc theo type nếu có
+    // ⭐ THÊM query param 'includeJobCount'
+    const { type: rawType, includeJobCount } = req.query; 
 
-    const where = {};
-    
+    let where = {};
+    let attributes = ['id', 'type', 'name', 'description'];
+    let group = ['Category.id']; // Chỉ cần GROUP BY ID vì các trường khác là duy nhất cho ID
+    let include = [];
+    let order = [['type', 'ASC'], ['name', 'ASC']];
+
     if (rawType) {
         try {
             where.type = checkType(rawType);
         } catch (error) {
-            return next(error); // Chuyển lỗi loại không hợp lệ
+            return next(error); 
         }
     }
 
+    // ⭐ LOGIC THỐNG KÊ (Nếu includeJobCount = 'true' và type là INDUSTRY)
+    // Chỉ đếm số lượng việc làm nếu type là INDUSTRY, vì các loại khác không cần Job Count
+    if (includeJobCount === 'true' && where.type === 'INDUSTRY') { 
+        
+        // 1. Thêm trường đếm vào attributes
+        attributes.push([Sequelize.fn('COUNT', Sequelize.col('jobsInIndustry.id')), 'jobCount']);
+
+        // 2. Định nghĩa JOIN với bảng Job, sử dụng alias 'jobsInIndustry'
+        include = [{
+            model: Job,
+            as: 'jobsInIndustry', // ⭐ QUAN TRỌNG: Phải khớp với alias trong file associations
+            attributes: [],       // Không lấy các trường của Job
+            required: false       // LEFT JOIN: Lấy cả Industry không có Jobs
+        }];
+
+        // 3. Phải nhóm theo tất cả các thuộc tính SELECT (trừ COUNT)
+        // Vì 'Category.id' là khóa chính, chỉ cần group theo nó
+        group = ['Category.id', 'Category.type', 'Category.name', 'Category.description']; 
+        
+        // 4. Sắp xếp: Theo số lượng việc làm giảm dần, sau đó theo tên
+        order = [[Sequelize.fn('COUNT', Sequelize.col('jobsInIndustry.id')), 'DESC'], ['name', 'ASC']];
+    }
+    
+    // Nếu không có thống kê, chúng ta quay lại sắp xếp mặc định theo type và name.
+
     const categories = await Category.findAll({ 
         where, 
-        order: [['type', 'ASC'], ['name', 'ASC']] // Sắp xếp cho dễ xem
+        attributes,
+        include, 
+        group,   
+        order,
+        // Dùng raw: true để Sequelize không cố gắng tạo đối tượng model cho kết quả GROUP BY
+        // Tuy nhiên, việc map plain: true ở dưới an toàn hơn.
     });
+
+    // Chuyển kết quả về định dạng JSON thuần túy (để trường jobCount hiển thị đúng)
+    const resultCategories = categories.map(cat => cat.get({ plain: true }));
 
     res.status(200).json({
         status: 'success',
-        results: categories.length,
+        results: resultCategories.length,
         data: {
-            categories
+            categories: resultCategories
         }
     });
 });
-
 // ----------------- 3. Lấy 1 Danh mục theo ID (Read One) -----------------
 exports.getCategory = catchAsync(async (req, res, next) => {
     const category = await Category.findByPk(req.params.id); // Dùng findByPk cho khóa chính

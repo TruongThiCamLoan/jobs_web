@@ -110,22 +110,22 @@ export default function AppliedJobsPage() {
                            
                            {/* 2. HỒ SƠ XIN VIỆC (ĐANG ACTIVE LÀ MỤC CON: Tải hồ sơ lên) */}
                            <Nav.Link as={Link} to="/resume" className="text-dark py-1">
-                               <FileText size={14} className="me-1" /> Hồ sơ xin việc (0)
+                               <FileText size={14} className="me-1" /> Hồ sơ xin việc 
                            </Nav.Link>
    
-                           {/* 3. VIỆC ĐÃ LƯU */}
+                           {/* 3. VIỆC ĐÃ LƯU */}   
                            <Nav.Link as={Link} to="/saved-jobs" className="text-dark py-1">
-                               <Heart size={14} className="me-1" /> Việc đã lưu (0)
+                               <Heart size={14} className="me-1" /> Việc đã lưu 
                            </Nav.Link>
                            
                            {/* 4. VIỆC ĐÃ ỨNG TUYỂN */}
                            <Nav.Link as={Link} to="/applied-jobs" className="text-primary fw-semibold border-bottom border-primary border-3 pb-1">
-                               <Briefcase size={14} className="me-1" /> Việc đã ứng tuyển (0)
+                               <Briefcase size={14} className="me-1" /> Việc đã ứng tuyển 
                            </Nav.Link>
                            
                             {/* 5. THÔNG BÁO VIỆC LÀM */}
                            <Nav.Link as={Link} to="/job-alerts" className="text-dark py-1">
-                               <Bell size={14} className="me-1" /> Thông báo việc làm (0)
+                               <Bell size={14} className="me-1" /> Thông báo việc làm 
                            </Nav.Link>
                            
                             {/* 6. TÀI KHOẢN */}

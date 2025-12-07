@@ -144,9 +144,9 @@ exports.signin = async (req, res) => {
 
         // 4. CẤP TOKEN VÀ TRẢ VỀ DỮ LIỆU (Chỉ khi đã qua các bước kiểm tra)
         const token = jwt.sign({ id: user.id, role: user.role },
-                            "YOUR_VERY_SECRET_KEY", // TỐT NHẤT NÊN DÙNG config.secret
-                            { expiresIn: 86400 } 
-                          );
+                                "YOUR_VERY_SECRET_KEY", // TỐT NHẤT NÊN DÙNG config.secret
+                                { expiresIn: 86400 } 
+                              );
 
         res.status(200).send({
             // Các trường thông tin cơ bản
@@ -219,4 +219,160 @@ exports.changePassword = async (req, res) => {
         console.error("Lỗi đổi mật khẩu:", error);
         res.status(500).send({ message: "Lỗi server trong quá trình đổi mật khẩu.", error: error.message });
     }
+};
+
+// =======================================================
+// 4. API KIỂM TRA EMAIL TỒN TẠI (POST /api/auth/check-email)
+// =======================================================
+exports.checkEmailExists = async (req, res) => {
+    const { email } = req.body;
+
+    if (!email) {
+        return res.status(400).send({ message: "Vui lòng cung cấp email." });
+    }
+
+    try {
+        // Tìm kiếm email trong bảng User (jobs_web_users)
+        const user = await db.User.findOne({ 
+            where: { email: email },
+            attributes: ['id', 'email', 'role']
+        });
+
+        if (user) {
+            // Email tồn tại
+            res.status(200).send({ 
+                exists: true,
+                userType: user.role, // Trả về role để Front-end biết đó là loại người dùng nào
+                userId: user.id
+            });
+        } else {
+            // Email không tồn tại
+            res.status(200).send({ exists: false, message: "Email không tồn tại trong hệ thống." });
+        }
+
+    } catch (error) {
+        console.error("Lỗi kiểm tra email:", error);
+        res.status(500).send({ message: "Lỗi server trong quá trình kiểm tra email.", error: error.message });
+    }
+};
+
+// =======================================================
+// 5. API GỬI VÀ LƯU OTP (POST /api/auth/send-otp)  <-- THAY THẾ CHO API GỐC CỦA BẠN
+// =======================================================
+exports.sendOtp = async (req, res) => {
+    const { email } = req.body; 
+
+    if (!email) {
+        return res.status(400).send({ message: "Vui lòng cung cấp email." });
+    }
+
+    try {
+        const user = await db.User.findOne({ where: { email: email } });
+        
+        if (!user) {
+            return res.status(404).send({ message: "Email không tồn tại." });
+        }
+        
+        // 1. Tạo OTP và thời gian hết hạn (ví dụ: 10 phút)
+        const otpCode = Math.floor(100000 + Math.random() * 900000).toString();
+        const otpExpiry = new Date();
+        otpExpiry.setMinutes(otpExpiry.getMinutes() + 10); // OTP hết hạn sau 10 phút
+
+        // 2. LƯU OTP VÀ THỜI GIAN HẾT HẠN VÀO DATABASE
+        // Yêu cầu: Đảm bảo cột otpCode và otpExpiry tồn tại trong bảng User
+        await user.update({ otpCode: otpCode, otpExpiry: otpExpiry });
+
+        // 3. GỌI DỊCH VỤ GỬI EMAIL (Bạn cần tích hợp NodeMailer/service vào đây)
+        // Hiện tại, ta chỉ log để kiểm tra Back-end và trả về OTP để Front-end gửi bằng EmailJS
+        console.log(`[SERVER LOG] Gửi OTP ${otpCode} tới ${email}. Hết hạn: ${otpExpiry}`);
+
+        // 4. Trả về thành công
+        res.status(200).send({
+            success: true,
+            otpCode: otpCode, // Trả về OTP để Front-end gửi email qua EmailJS
+            message: "Mã xác minh đã được lưu và sẵn sàng gửi.",
+        });
+
+    } catch (error) {
+        console.error("Lỗi gửi OTP:", error);
+        res.status(500).send({ message: "Lỗi server trong quá trình gửi mã xác minh.", error: error.message });
+    }
+};
+
+// =======================================================
+// 6. API ĐẶT LẠI MẬT KHẨU (POST /api/auth/reset-password) - ĐÃ CẬP NHẬT LOGIC XÁC MINH
+// =======================================================
+exports.resetPassword = async (req, res) => {
+    // Front-end gửi: email, mật khẩu mới (newPassword), và mã xác minh (otpCode)
+    const { email, newPassword, otpCode } = req.body; 
+
+    if (!email || !newPassword || !otpCode) {
+        return res.status(400).send({ message: "Thiếu thông tin: email, mật khẩu mới hoặc mã xác minh OTP." });
+    }
+
+    try {
+        // 1. TÌM USER, LẤY CẢ THÔNG TIN OTP
+        const user = await db.User.findOne({ 
+            where: { email: email }
+        });
+
+        if (!user) {
+            return res.status(404).send({ message: "Người dùng không tồn tại." });
+        }
+        
+        // =======================================================
+        // ✅ CHỖ GỠ LỖI: IN RA DỮ LIỆU ĐỂ KIỂM TRA LỖI KHÔNG KHỚP
+        // =======================================================
+        console.log("--- DEBUG RESET PASSWORD ---");
+        console.log(`Email: ${email}`);
+        console.log(`OTP User đã lưu (DB): ${user.otpCode}`);
+        console.log(`OTP Người dùng nhập (FE): ${otpCode}`);
+        console.log(`Thời gian hết hạn (DB): ${user.otpExpiry}`);
+        console.log("--- END DEBUG ---");
+        // =======================================================
+        
+        // 2. XÁC MINH OTP và HẾT HẠN
+        // RẤT CÓ KHẢ NĂNG LÀ LỖI NÀY: MÃ CÓ KHOẢNG TRẮNG HAY KHÔNG KHỚP
+        if (!user.otpCode || user.otpCode !== otpCode) {
+            return res.status(400).send({ message: "Mã xác minh không chính xác." });
+        }
+
+        const currentTime = new Date();
+        if (user.otpExpiry && currentTime > new Date(user.otpExpiry)) {
+            // Xóa mã OTP đã hết hạn sau khi kiểm tra
+            await user.update({ otpCode: null, otpExpiry: null });
+            return res.status(400).send({ message: "Mã xác minh đã hết hạn. Vui lòng gửi yêu cầu mới." });
+        }
+
+        // 3. MÃ HÓA (hash) VÀ CẬP NHẬT MẬT KHẨU MỚI
+        const hashedPassword = bcrypt.hashSync(newPassword, 8);
+        await user.update({ 
+            password: hashedPassword,
+            // XÓA OTP VÀ THỜI GIAN HẾT HẠN SAU KHI DÙNG THÀNH CÔNG
+            otpCode: null, 
+            otpExpiry: null
+        });
+
+        // 4. TRẢ VỀ THÀNH CÔNG
+        res.status(200).send({
+            message: "Đặt lại mật khẩu thành công! Vui lòng đăng nhập lại với mật khẩu mới.",
+        });
+
+    } catch (error) {
+        console.error("Lỗi đặt lại mật khẩu:", error);
+        res.status(500).send({ message: "Lỗi server trong quá trình đặt lại mật khẩu.", error: error.message });
+    }
+};
+
+
+// =======================================================
+// XUẤT TẤT CẢ CÁC HÀM
+// =======================================================
+module.exports = {
+    signup: exports.signup,
+    signin: exports.signin,
+    changePassword: exports.changePassword,
+    checkEmailExists: exports.checkEmailExists, 
+    sendOtp: exports.sendOtp, // ✅ HÀM MỚI (Lưu OTP)
+    resetPassword: exports.resetPassword, // ✅ ĐÃ CẬP NHẬT LOGIC
 };

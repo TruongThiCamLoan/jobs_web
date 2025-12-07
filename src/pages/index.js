@@ -17,6 +17,10 @@ export { default as AccountPage } from "./AccountPage";
 export { default as ChangePasswordPage } from "./ChangePasswordPage";
 export { default as EmailNotificationPage } from "./EmailNotificationPage";
 
+export { default as ForgotPasswordPage } from "./ForgotPasswordPage";
+export { default as EnterOtpPage } from "./EnterOtpPage";
+export { default as ResetPasswordFormPage } from "./ResetPasswordFormPage";
+
 export { default as CreateResumeStep1 } from "./CreateResumeStep1";
 export { default as CreateResumeStep2 } from "./CreateResumeStep2"; 
 export { default as CreateResumeStep3 } from "./CreateResumeStep3";

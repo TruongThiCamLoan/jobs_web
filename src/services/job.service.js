@@ -1,5 +1,13 @@
 import API from "./api";
 
+// ⭐ CẬP NHẬT: Hàm Helper chấp nhận tham số params
+const fetchCategoriesByType = (type, params = {}) => {
+    // SỬ DỤNG ĐƯỜNG DẪN PUBLIC MỚI
+    // Giả định bạn dùng tiền tố API là /api/v1
+    // Tham số type được đưa vào URL, các tham số khác được đưa vào Axios params
+    return API.get(`/v1/categories?type=${type}`, { params: params }); 
+};
+
 class JobService {
     // 1. Lấy danh sách việc làm (Public)
     async getJobList(filters) {
@@ -80,6 +88,53 @@ class JobService {
         // API GET /api/jobs (sẽ được lọc theo EmployerID)
         return this.getJobList(); 
     }
+
+    // ⭐ CẬP NHẬT: Hàm chấp nhận tham số params và áp dụng cho các cuộc gọi API
+    async getDynamicFilters(params = {}) {
+        try {
+            // Gọi song song 5 API để tối ưu thời gian tải
+            const [
+                careerRes, 
+                levelRes, 
+                jobTypeRes, 
+                salaryRes, 
+                experienceRes
+            ] = await Promise.all([
+                // ⭐ TRUYỀN PARAMS CHO CÁC API CẦN THỐNG KÊ (VD: INDUSTRY)
+                fetchCategoriesByType('INDUSTRY', params), 
+                fetchCategoriesByType('JOB_LEVEL'),
+                fetchCategoriesByType('JOB_TYPE'),
+                fetchCategoriesByType('SALARY'), 
+                fetchCategoriesByType('EXPERIENCE'),
+            ]);
+
+            // Hàm helper để chuẩn hóa dữ liệu từ response
+            const normalizeData = (response) => {
+                // Dựa trên response backend của bạn: { data: { categories: [...] } }
+                const categories = response.data?.data?.categories || []; 
+                return categories.map(item => ({
+                    // 'name' là nhãn hiển thị, 'id' là giá trị lọc
+                    label: item.name, 
+                    value: item.id.toString(),
+                    // ⭐ TRÍCH XUẤT jobCount (nếu có)
+                    jobCount: item.jobCount ? parseInt(item.jobCount) : undefined
+                }));
+            };
+
+            return {
+                career: normalizeData(careerRes),
+                level: normalizeData(levelRes),
+                jobType: normalizeData(jobTypeRes),
+                salary: normalizeData(salaryRes), 
+                experience: normalizeData(experienceRes)
+            };
+        } catch (error) {
+            console.error("Lỗi khi tải bộ lọc động:", error);
+            // Trả về dữ liệu trống để tránh lỗi runtime trong component
+            return { career: [], level: [], jobType: [], salary: [], experience: [] };
+        }
+    }
+
 }
 
 export default new JobService();

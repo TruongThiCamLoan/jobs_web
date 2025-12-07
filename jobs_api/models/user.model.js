@@ -14,7 +14,7 @@
             email: { 
                 type: DataTypes.STRING(100), 
                 allowNull: false, 
-                unique: true 
+                // unique: true 
             },
             password: { 
                 type: DataTypes.STRING(100), 
@@ -25,6 +25,17 @@
                 allowNull: false, 
                 defaultValue: 'Student', 
             },
+
+                otpCode: {
+                    type: DataTypes.STRING(6), // Mã OTP thường là 6 chữ số
+                    allowNull: true,
+                    defaultValue: null
+                },
+                otpExpiry: {
+                    type: DataTypes.DATE, // Thời gian hết hạn
+                    allowNull: true,
+                    defaultValue: null
+                },
             // 💡 CỘT MỚI: DÙNG ĐỂ LỌC VÀ CẬP NHẬT TRẠNG THÁI KHÓA
             isLocked: {
                 type: DataTypes.BOOLEAN,

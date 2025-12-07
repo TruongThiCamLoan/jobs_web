@@ -2,10 +2,8 @@
   "name": "jobs",
   "version": "0.1.0",
   "private": true,
-
-  "proxy": "http://localhost:8080",
-  
   "dependencies": {
+    "@emailjs/browser": "^4.4.1",
     "@testing-library/dom": "^10.4.1",
     "@testing-library/jest-dom": "^6.9.1",
     "@testing-library/react": "^16.3.0",
@@ -19,6 +17,7 @@
     "express": "^5.1.0",
     "jsonwebtoken": "^9.0.2",
     "lucide-react": "^0.552.0",
+    "multer": "^2.0.2",
     "mysql2": "^3.15.3",
     "react": "^19.2.0",
     "react-bootstrap": "^2.10.10",

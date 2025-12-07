@@ -1,23 +1,22 @@
-// src/services/api.js (CODE HOÀN CHỈNH)
 import axios from "axios";
 
+// ✅ Tạo instance Axios chung cho toàn bộ dự án
 const API = axios.create({
-  // Đảm bảo URL này khớp với server Node.js của bạn
-  baseURL: "http://localhost:8080/api", 
+  baseURL: "http://localhost:8080/api", // ⚠️ Phải trùng với server Express
   headers: {
     "Content-Type": "application/json",
   },
 });
 
-// INTERCEPTOR: Tự động gắn Token vào Header cho các request được bảo vệ
+// 💡 Thêm interceptor để tự động gửi token nếu cần
 API.interceptors.request.use(
   (config) => {
-    // Lấy thông tin user từ Local Storage
-    const user = JSON.parse(localStorage.getItem('user'));
-
-    if (user && user.accessToken) {
-      // Gắn Token vào Header Authorization (sử dụng Bearer Token)
-      config.headers['Authorization'] = 'Bearer ' + user.accessToken;
+    const user = localStorage.getItem("user");
+    if (user) {
+      const token = JSON.parse(user).accessToken;
+      if (token) {
+        config.headers["Authorization"] = `Bearer ${token}`;
+      }
     }
     return config;
   },

@@ -185,16 +185,16 @@ export default function AccountPage() {
                             <Briefcase size={14} className="me-1" /> My Jobs
                         </Nav.Link>
                         <Nav.Link as={Link} to="/resume" className="text-dark py-1">
-                            <FileText size={14} className="me-1" /> Hồ sơ xin việc (0)
+                            <FileText size={14} className="me-1" /> Hồ sơ xin việc 
                         </Nav.Link>
                         <Nav.Link as={Link} to="/saved-jobs" className="text-dark py-1">
-                            <Heart size={14} className="me-1" /> Việc đã lưu (0)
+                            <Heart size={14} className="me-1" /> Việc đã lưu 
                         </Nav.Link>
                         <Nav.Link as={Link} to="/applied-jobs" className="text-dark py-1">
-                            <Briefcase size={14} className="me-1" /> Việc đã ứng tuyển (0)
+                            <Briefcase size={14} className="me-1" /> Việc đã ứng tuyển 
                         </Nav.Link>
                         <Nav.Link as={Link} to="/job-alerts" className="text-dark py-1">
-                            <Bell size={14} className="me-1" /> Thông báo việc làm (0)
+                            <Bell size={14} className="me-1" /> Thông báo việc làm 
                         </Nav.Link>
                         <Nav.Link as={Link} to="/account" className="text-primary fw-semibold border-bottom border-primary border-3 pb-1">
                             <Person className="me-1" /> Tài khoản
@@ -302,17 +302,6 @@ export default function AccountPage() {
                                                     {/* EMPTY BUTTON SPACE */}
                                                 </Col>
                                             </div>
-                                        </div>
-
-                                        {/* NÚT XÓA TÀI KHOẢN */}
-                                        <div className="mt-5 pt-3">
-                                            <Button 
-                                                variant="outline-danger" 
-                                                className="fw-semibold" 
-                                                onClick={handleDeleteAccount}
-                                            >
-                                                <Trash2 size={16} className="me-2" /> Xóa tài khoản
-                                            </Button>
                                         </div>
                                     </>
                                 )

@@ -13,21 +13,14 @@ export const AuthProvider = ({ children }) => {
         setLoading(false);
     }, []);
 
-    // 🔄 HÀM LOGIN ĐÃ CẬP NHẬT: Trích xuất chi tiết user status từ lỗi
+    // 🔄 HÀM LOGIN 
     const login = async (email, password) => {
         setLoading(true);
-        // AuthService.login giờ sẽ trả về { success: bool, message: string, user: {status data} }
         const result = await AuthService.login(email, password);
         
         if (result.success) {
             setCurrentUser(result.user);
         } else {
-            // 💡 QUAN TRỌNG: Nếu đăng nhập KHÔNG thành công, ta vẫn cần kiểm tra xem
-            // result có chứa thông tin user status (như isLocked, lockReason) 
-            // được Backend gửi kèm trong lỗi 403 hay không.
-            // Nếu có, LoginPage sẽ dùng thông tin này để hiển thị thông báo chi tiết.
-            
-            // Đảm bảo không lưu user vào state nếu login thất bại
             setCurrentUser(null); 
         }
 
@@ -47,6 +40,35 @@ export const AuthProvider = ({ children }) => {
         return result;
     };
 
+    // ===============================================================
+    // ✅ BỔ SUNG: HÀM CHO CHỨC NĂNG QUÊN MẬT KHẨU
+    // ===============================================================
+    
+    /**
+     * Kiểm tra email tồn tại trong CSDL.
+     */
+    const checkEmailExists = async (email) => {
+        return await AuthService.checkEmailExists(email);
+    };
+
+    /**
+     * Gửi yêu cầu tạo và lưu OTP vào database.
+     * @param {string} email - Email người dùng.
+     * @returns {Promise<{success: boolean, otpCode?: string, message: string}>}
+     */
+    const sendOtp = async (email) => {
+        // Gọi AuthService, AuthService gọi API /send-otp
+        return await AuthService.sendOtp(email);
+    };
+
+    /**
+     * Đặt lại mật khẩu mới sau khi xác minh OTP.
+     */
+    const resetPassword = async (email, newPassword, otpCode) => {
+        return await AuthService.resetPassword(email, newPassword, otpCode);
+    };
+    // ===============================================================
+
     // ✨ KHẮC PHỤC LỖI 401: Lấy Token từ trường accessToken của đối tượng currentUser
     const authToken = currentUser?.accessToken;
 
@@ -56,6 +78,11 @@ export const AuthProvider = ({ children }) => {
         login,
         logout,
         register,
+        
+        // CUNG CẤP HÀM MỚI QUA CONTEXT
+        checkEmailExists, 
+        sendOtp,          // <--- HÀM BỔ SUNG QUAN TRỌNG
+        resetPassword,    
         
         // CUNG CẤP authToken CHO CÁC COMPONENT SỬ DỤNG HOOK useAuth()
         authToken, 

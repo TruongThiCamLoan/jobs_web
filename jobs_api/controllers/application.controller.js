@@ -12,6 +12,122 @@ const Employer = db.Employer; // THÊM EMPLOYER ĐỂ JOIN KHI LẤY DANH SÁCH
 // LOGIC TƯƠNG TÁC VỚI DATABASE THẬT (SEQUELIZE)
 // ==========================================================
 
+
+exports.getEmployerCandidates = async (req, res) => {
+    if (req.userRole !== 'Employer') {
+        return res.status(403).json({ message: "Chỉ tài khoản Nhà tuyển dụng (Employer) mới có thể xem ứng viên." });
+    }
+    
+    const employerId = await getEmployerIdFromUserId(req.userId);
+
+    if (!employerId) {
+        return res.status(200).json([]); 
+    }
+
+    try {
+        // 1. Tìm tất cả Job ID thuộc về Nhà tuyển dụng này
+        const employerJobs = await Job.findAll({
+            where: { employerId: employerId },
+            attributes: ['jobId', 'title']
+        });
+
+        const jobIds = employerJobs.map(job => job.jobId);
+
+        if (jobIds.length === 0) {
+            return res.status(200).json([]); 
+        }
+        
+        // 2. Lấy tất cả Application (đơn ứng tuyển) cho các Job ID đó
+        const applications = await Application.findAll({
+            where: { jobId: jobIds },
+            include: [
+                { model: Job, as: 'job', attributes: ['title', 'jobId'] },
+                {
+                    model: Student,
+                    as: 'student', 
+                    attributes: ['fullName', 'email', 'phoneNumber', 'educationLevel', 'experienceYears'], 
+                }
+            ],
+            order: [['createdAt', 'DESC']]
+        });
+        
+        // 3. Chuẩn hóa dữ liệu trả về theo format Frontend
+        const candidatesForFrontend = applications.map(app => {
+            const student = app.student;
+            const job = app.job;
+
+            return {
+                id: app.applicationId, // Dùng Application ID để Duyệt/Từ chối
+                name: student ? student.fullName : 'Ứng viên ẩn danh',
+                position: job ? job.title : 'Công việc đã xóa',
+                match: Math.floor(Math.random() * (95 - 60 + 1)) + 60 + '%', // Giả lập Match Score
+                email: student ? student.email : 'N/A',
+                phone: student ? student.phoneNumber : 'N/A',
+                education: student ? student.educationLevel : 'N/A',
+                experience: student ? `${student.experienceYears} năm` : 'N/A',
+                skills: 'React, Node.js...', // Cần lấy từ bảng Resume
+                note: `Ứng tuyển vào tin: ${job ? job.title : 'N/A'}`,
+                status: app.status // 'Pending', 'Approved', 'Rejected'
+            };
+        });
+
+        res.status(200).json(candidatesForFrontend);
+
+    } catch (error) {
+        console.error("LỖI KHI LẤY ỨNG VIÊN CHO EMPLOYER (500):", error.message);
+        res.status(500).json({ message: "Lỗi Server nội bộ khi lấy danh sách ứng viên." });
+    }
+};
+
+
+// 🎯 BỔ SUNG: Cập nhật trạng thái đơn ứng tuyển (Duyệt/Từ chối)
+exports.updateApplicationStatus = async (req, res) => {
+    if (req.userRole !== 'Employer') {
+        return res.status(403).json({ message: "Chỉ tài khoản Nhà tuyển dụng (Employer) mới có quyền duyệt hồ sơ." });
+    }
+    
+    const employerId = await getEmployerIdFromUserId(req.userId);
+    if (!employerId) {
+        return res.status(403).json({ message: "Hồ sơ công ty không hợp lệ." });
+    }
+
+    const applicationId = req.params.id;
+    const { status } = req.body; 
+
+    if (!['Approved', 'Rejected', 'Pending'].includes(status)) {
+        return res.status(400).json({ message: "Trạng thái không hợp lệ." });
+    }
+
+    try {
+        // 1. Tìm Application và Job để kiểm tra quyền sở hữu
+        const application = await Application.findByPk(applicationId, {
+            include: [{ model: Job, as: 'job', attributes: ['employerId'] }]
+        });
+
+        if (!application) {
+            return res.status(404).json({ message: "Không tìm thấy đơn ứng tuyển." });
+        }
+
+        // 2. KIỂM TRA QUYỀN: Đảm bảo Job thuộc về Employer hiện tại
+        if (application.job.employerId !== employerId) {
+            return res.status(403).json({ message: "Bạn không có quyền thay đổi trạng thái đơn ứng tuyển này." });
+        }
+        
+        // 3. Cập nhật trạng thái
+        application.status = status;
+        await application.save();
+
+        res.status(200).json({ 
+            message: `Cập nhật trạng thái thành công: ${status}`,
+            applicationId: application.applicationId,
+            newStatus: application.status
+        });
+
+    } catch (error) {
+        console.error("LỖI KHI CẬP NHẬT TRẠNG THÁI ỨNG VIÊN (500):", error.message);
+        res.status(500).json({ message: "Lỗi Server nội bộ khi cập nhật trạng thái." });
+    }
+};
 // Hàm helper để tìm Student ID từ User ID (req.userId) - Giống SavedJobController
 const getStudentIdFromUserId = async (userId) => {
     // Logic này giả định bảng Students có cột userId trỏ đến Users.

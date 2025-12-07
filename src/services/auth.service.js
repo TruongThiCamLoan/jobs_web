@@ -1,73 +1,103 @@
 // src/services/auth.service.js
 
-import API from "./api"; // Import Axios instance đã tạo (giả định)
+import API from "./api"; // Axios instance đã tạo
 
 class AuthService {
-    async login(email, password) {
-        try {
-            const response = await API.post("/auth/signin", {
-                email,
-                password,
-            });
+  // ======================================================
+  // ✅ ĐĂNG NHẬP
+  // ======================================================
+  async login(email, password) {
+    try {
+      const response = await API.post("/auth/signin", { email, password });
 
-            if (response.data.accessToken) {
-                // Lưu toàn bộ đối tượng user (bao gồm role và accessToken) vào Local Storage
-                localStorage.setItem("user", JSON.stringify(response.data));
-            }
+      if (response.data.accessToken) {
+        // Lưu toàn bộ đối tượng user (bao gồm role và accessToken) vào Local Storage
+        localStorage.setItem("user", JSON.stringify(response.data));
+      }
 
-            // Trả về dữ liệu user (có chứa accessToken)
-            return { success: true, user: response.data };
-        } catch (error) {
-            // Lấy payload lỗi từ phản hồi Axios
-            const errorData = error.response?.data;
-            const message = errorData?.message || "Đăng nhập thất bại. Lỗi kết nối server.";
-            
-            // 💡 SỬA LỖI: Trả về toàn bộ payload lỗi từ Backend (kèm theo các trường trạng thái)
-            // Điều này cho phép LoginPage.js truy cập result.user.isLocked, lockReason, etc.
-            const statusUser = {
-                // Lấy các trường trạng thái chi tiết mà Backend gửi trong lỗi 403
-                isLocked: errorData?.isLocked || false,
-                lockReason: errorData?.lockReason || null,
-                lockUntil: errorData?.lockUntil || null,
-                isVerified: errorData?.isVerified || false,
-                rejectionReason: errorData?.rejectionReason || null,
-                role: errorData?.role || null,
-            };
+      // Trả về dữ liệu user (có chứa accessToken)
+      return { success: true, user: response.data };
+    } catch (error) {
+      const errorData = error.response?.data;
+      const message = errorData?.message || "Đăng nhập thất bại. Lỗi kết nối server.";
 
-            return { 
-                success: false, 
-                message: message,
-                // Đóng gói thông tin trạng thái vào key 'user' để LoginPage xử lý
-                user: statusUser
-            };
-        }
+      // Trả về toàn bộ thông tin trạng thái user (khóa, duyệt, role, ...)
+      const statusUser = {
+        isLocked: errorData?.isLocked || false,
+        lockReason: errorData?.lockReason || null,
+        lockUntil: errorData?.lockUntil || null,
+        isVerified: errorData?.isVerified || false,
+        rejectionReason: errorData?.rejectionReason || null,
+        role: errorData?.role || null,
+      };
+
+      return {
+        success: false,
+        message: message,
+        user: statusUser,
+      };
     }
+  }
 
-    async register(fullName, email, password, role) {
-        try {
-            const response = await API.post("/auth/signup", {
-                fullName,
-                email,
-                password,
-                role, 
-            });
-            return { success: true, message: "Đăng ký thành công!", user: response.data };
-        } catch (error) {
-            const message =
-                error.response?.data?.message || "Đăng ký thất bại. Email đã tồn tại hoặc lỗi server.";
-            return { success: false, message };
-        }
+  // ======================================================
+  // ✅ ĐĂNG KÝ
+  // ======================================================
+  async register(fullName, email, password, role) {
+    try {
+      const response = await API.post("/auth/signup", { fullName, email, password, role });
+      return { success: true, message: "Đăng ký thành công!", user: response.data };
+    } catch (error) {
+      const message =
+        error.response?.data?.message || "Đăng ký thất bại. Email đã tồn tại hoặc lỗi server.";
+      return { success: false, message };
     }
+  }
 
-    logout() {
-        localStorage.removeItem("user");
-    }
+  // ======================================================
+  // ✅ QUÊN MẬT KHẨU - GỬI OTP
+  // ======================================================
+  async sendOtp(email) {
+    try {
+      const response = await API.post("/auth/send-otp", { email });
 
-    getCurrentUser() {
-        const user = localStorage.getItem("user");
-        // Tải đối tượng user từ Local Storage (bao gồm cả accessToken)
-        return user ? JSON.parse(user) : null;
+      return {
+        success: true,
+        otpCode: response.data.otpCode, // OTP đã được server lưu
+        message: response.data.message,
+      };
+    } catch (error) {
+      const message = error.response?.data?.message || "Lỗi kết nối server hoặc email không tồn tại.";
+      return { success: false, message };
     }
+  }
+
+  // ======================================================
+  // ✅ QUÊN MẬT KHẨU - ĐẶT LẠI MẬT KHẨU
+  // ======================================================
+  async resetPassword(email, newPassword, otpCode) {
+    try {
+      const response = await API.post("/auth/reset-password", { email, newPassword, otpCode });
+      return { success: true, message: response.data.message };
+    } catch (error) {
+      const message = error.response?.data?.message || "Đặt lại mật khẩu thất bại. Lỗi kết nối server.";
+      return { success: false, message };
+    }
+  }
+
+  // ======================================================
+  // ✅ ĐĂNG XUẤT
+  // ======================================================
+  logout() {
+    localStorage.removeItem("user");
+  }
+
+  // ======================================================
+  // ✅ LẤY NGƯỜI DÙNG HIỆN TẠI
+  // ======================================================
+  getCurrentUser() {
+    const user = localStorage.getItem("user");
+    return user ? JSON.parse(user) : null;
+  }
 }
 
 export default new AuthService();

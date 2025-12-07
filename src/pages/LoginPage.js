@@ -146,11 +146,11 @@ export default function LoginPage() {
                     <button type="submit" className="btn btn-primary w-100 mt-2">Đăng nhập</button>
                 </form>
 
-                <div className="text-center mt-3 text-muted">Hoặc đăng nhập bằng</div>
+                {/* <div className="text-center mt-3 text-muted">Hoặc đăng nhập bằng</div>
                 <div className="d-flex justify-content-between mt-3">
                     <button className="btn btn-outline-danger w-100 me-2"><i className="bi bi-google me-2"></i>Google</button>
                     <button className="btn btn-outline-primary w-100 me-2"><i className="bi bi-facebook me-2"></i>Facebook</button>
-                </div>
+                </div> */}
 
                 <p className="text-center mt-4">
                     Bạn chưa có tài khoản?{" "}

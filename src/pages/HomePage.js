@@ -1,9 +1,9 @@
-import React, { useState, useEffect } from "react";
-import { Container, Row, Col, Card, Button } from "react-bootstrap";
+import React, { useState, useEffect, useCallback } from "react";
+import { Container, Row, Col, Card, Button, Spinner } from "react-bootstrap";
 import { Link, useNavigate } from "react-router-dom";
 import AppNavbar from "../components/Navbar"; 
 import JobService from "../services/job.service"; 
-import { Search, List, Award, Clock, CashStack, Briefcase, GeoAlt } from "react-bootstrap-icons";
+import { Search, GeoAlt } from "react-bootstrap-icons";
 import "./style.css";
 
 // IMPORT MOCK ASSETS
@@ -12,9 +12,20 @@ import banner2 from "../img/banner2.jpg";
 import banner3 from "../img/banner3.jpg";
 import banner4 from "../img/banner4.jpg"; 
 import Banner from "../img/Banner.jpg";
-import logoPlaceholder from "../img/Banner.jpg"; // FIX: Thêm logoPlaceholder
+import logoPlaceholder from "../img/Banner.jpg";
 
-// Hàm ánh xạ ID job thành logo giả định
+// DỮ LIỆU DỰ PHÒNG (FALLBACK) CẦN ĐƯỢC KHAI BÁO LẠI (Sử dụng ID/Value mock)
+const MOCK_CATEGORIES_FALLBACK = [
+    { label: "Kế toán / Kiểm toán", value: "mock_1", icon: "calculator", link: "/jobs/search?career=mock_1" },
+    { label: "Quảng cáo / Marketing", value: "mock_2", icon: "megaphone", link: "/jobs/search?career=mock_2" },
+    { label: "Nông nghiệp / Lâm nghiệp", value: "mock_3", icon: "seedling", link: "/jobs/search?career=mock_3" },
+    { label: "Nghệ thuật / Sáng tạo", value: "mock_4", icon: "brush", link: "/jobs/search?career=mock_4" },
+    { label: "Ngân hàng / Tài chính", value: "mock_5", icon: "university", link: "/jobs/search?career=mock_5" },
+    { label: "Thư ký / Hành chính", value: "mock_6", icon: "tools", link: "/jobs/search?career=mock_6" },
+];
+
+
+// Hàm ánh xạ ID job thành logo giả định (Không đổi)
 const getMockLogo = (jobId) => {
     switch (jobId % 3) {
         case 0: return banner2;
@@ -24,7 +35,7 @@ const getMockLogo = (jobId) => {
     }
 }
 
-// Helper: Lấy Icon cho Ngành nghề
+// Helper: Lấy Icon cho Ngành nghề (Không đổi)
 const CategoryIcon = ({ name }) => {
     switch (name) {
         case 'calculator': return <i className="bi bi-calculator-fill text-primary" style={{ fontSize: '2rem' }}></i>;
@@ -36,16 +47,6 @@ const CategoryIcon = ({ name }) => {
         default: return <i className="bi bi-briefcase-fill text-primary" style={{ fontSize: '2rem' }}></i>;
     }
 };
-
-// Dữ liệu Mock cho Ngành nghề
-const MOCK_CATEGORIES = [
-    { name: "Kế toán / Kiểm toán", count: 1828, icon: "calculator", link: "/jobs/search?career=Kế toán" },
-    { name: "Quảng cáo /...", count: 976, icon: "megaphone", link: "/jobs/search?career=Quảng cáo" },
-    { name: "Nông nghiệp /...", count: 1333, icon: "seedling", link: "/jobs/search?career=Nông nghiệp" },
-    { name: "Nghệ thuật /...", count: 764, icon: "brush", link: "/jobs/search?career=Nghệ thuật" },
-    { name: "Ngân hàng /...", count: 1043, icon: "university", link: "/jobs/search?career=Ngân hàng" },
-    { name: "Thư ký / Hành...", count: 1528, icon: "tools", link: "/jobs/search?career=Hành chính" },
-];
 
 // DỮ LIỆU DỰ PHÒNG (FALLBACK) CHO NHÀ TUYỂN DỤNG
 const MOCK_EMPLOYERS_FALLBACK = [
@@ -83,15 +84,22 @@ const MOCK_EMPLOYERS_FALLBACK = [
 export default function HomePage() {
     const navigate = useNavigate();
     const [jobs, setJobs] = useState([]);
-    const [topEmployers, setTopEmployers] = useState([]); // State mới cho Top Employers
+    const [topEmployers, setTopEmployers] = useState([]);
+    
+    // STATE: Danh sách ngành nghề động
+    const [industryCategories, setIndustryCategories] = useState([]);
+    const [loadingIndustries, setLoadingIndustries] = useState(true);
+
     const [searchTerm, setSearchTerm] = useState('');
     const [locationFilter, setLocationFilter] = useState('');
-    const [loading, setLoading] = useState(true); // Loading cho Jobs
-    const [loadingEmployers, setLoadingEmployers] = useState(true); // Loading cho Employers
+    const [loading, setLoading] = useState(true); 
+    const [loadingEmployers, setLoadingEmployers] = useState(true); 
     const [error, setError] = useState(null);
     const [errorEmployers, setErrorEmployers] = useState(null);
+    const [errorIndustries, setErrorIndustries] = useState(null);
 
-    // Hàm định dạng ngày
+
+    // Hàm định dạng ngày (Không đổi)
     const formatTimeAgo = (dateString) => {
         const date = new Date(dateString);
         const now = new Date();
@@ -105,7 +113,7 @@ export default function HomePage() {
     };
 
 
-    // HÀM TẢI DỮ LIỆU JOB TỪ BACKEND
+    // HÀM TẢI DỮ LIỆU JOB TỪ BACKEND (Không đổi)
     const fetchJobs = async () => {
         setLoading(true);
         setError(null);
@@ -123,14 +131,12 @@ export default function HomePage() {
         }
     };
     
-    // HÀM TẢI DỮ LIỆU NHÀ TUYỂN DỤNG TỪ BACKEND
+    // HÀM TẢI DỮ LIỆU NHÀ TUYỂN DỤNG TỪ BACKEND (Giữ nguyên)
     const fetchTopEmployers = async () => {
         setLoadingEmployers(true);
         setErrorEmployers(null);
         try {
-            // FIX: Giả định API mới cho Top Employers
             const employerData = await JobService.getTopEmployers(); 
-            // Nếu API trả về mảng rỗng hoặc lỗi, dùng fallback
             if (employerData && employerData.length > 0) {
                  setTopEmployers(employerData);
             } else {
@@ -139,17 +145,44 @@ export default function HomePage() {
         } catch (e) {
             console.error("Lỗi tải nhà tuyển dụng:", e);
             setErrorEmployers("Không thể tải danh sách nhà tuyển dụng từ API.");
-            setTopEmployers(MOCK_EMPLOYERS_FALLBACK); // Dùng fallback nếu lỗi API
+            setTopEmployers(MOCK_EMPLOYERS_FALLBACK); 
         } finally {
             setLoadingEmployers(false);
         }
     };
 
-    // Tải Job và Employers khi Component mount
+    // HÀM TẢI NGÀNH NGHỀ TỪ API DANH MỤC (Cập nhật logic fallback)
+    const fetchIndustryCategories = useCallback(async () => {
+        setLoadingIndustries(true);
+        setErrorIndustries(null);
+        try {
+            const allFilters = await JobService.getDynamicFilters();
+            
+            // Dữ liệu thật từ API
+            if (allFilters.career && allFilters.career.length > 0) {
+                setIndustryCategories(allFilters.career);
+            } else {
+                // Nếu API trả về mảng rỗng, dùng fallback
+                setIndustryCategories(MOCK_CATEGORIES_FALLBACK);
+            }
+            
+        } catch (e) {
+            console.error("Lỗi tải ngành nghề:", e);
+            setErrorIndustries("Không thể tải danh mục ngành nghề.");
+            // Dùng fallback nếu lỗi API
+            setIndustryCategories(MOCK_CATEGORIES_FALLBACK);
+        } finally {
+            setLoadingIndustries(false);
+        }
+    }, []);
+
+
+    // Tải Job, Employers và Industries khi Component mount
     useEffect(() => {
         fetchJobs(); 
-        fetchTopEmployers(); // Tải dữ liệu công ty
-    }, []); 
+        fetchTopEmployers();
+        fetchIndustryCategories(); 
+    }, [fetchIndustryCategories]); 
 
     // Xử lý tìm kiếm khi người dùng nhấn nút (CHUYỂN HƯỚNG SANG JOBSearchPage)
     const handleSearch = (e) => {
@@ -160,6 +193,11 @@ export default function HomePage() {
         
         navigate(`/jobs/search?${query.toString()}`);
     };
+
+    // Hàm giả định để lấy số lượng job (vì API danh mục không trả về count)
+    const getMockJobCount = (index) => {
+        return (index + 1) * 100 + (index * 5); 
+    }
 
 
     return (
@@ -223,8 +261,11 @@ export default function HomePage() {
                         </Button>
                     </Container>
                     <div className="p-3 text-center">
-                        [Image of Job Search Form]
-                        </div>
+                        
+
+[Image of Job Search Form]
+
+                    </div>
                 </div>
             </section>
 
@@ -238,7 +279,7 @@ export default function HomePage() {
                 </div>
                 
                 {error && <div className="alert alert-danger text-center">{error}</div>}
-                {loading && <div className="text-center text-primary fw-semibold">Đang tải việc làm...</div>}
+                {loading && <div className="text-center text-primary fw-semibold"><Spinner animation="border" size="sm" className="me-2"/> Đang tải việc làm...</div>}
 
 
                 <Row className="g-3">
@@ -281,7 +322,7 @@ export default function HomePage() {
                 </Row>
             </Container>
 
-            {/* --- VIỆC LÀM THEO NGÀNH NGHỀ --- */}
+            {/* --- VIỆC LÀM THEO NGÀNH NGHỀ (DYNAMIC) --- */}
             <Container className="my-5">
                 <div className="d-flex justify-content-between align-items-center mb-4">
                     <h4 className="fw-bold">Việc làm theo ngành nghề</h4>
@@ -289,22 +330,33 @@ export default function HomePage() {
                         Xem tất cả
                     </Link>
                 </div>
+                
+                {loadingIndustries && <div className="text-center text-primary fw-semibold"><Spinner animation="border" size="sm" className="me-2"/> Đang tải ngành nghề...</div>}
+                {errorIndustries && <div className="alert alert-danger text-center">{errorIndustries}</div>}
+
                 <Row className="g-3">
-                    {MOCK_CATEGORIES.map((category, index) => (
-                        <Col xs={6} sm={4} md={2} key={index}>
-                            <Link to={category.link} style={{ textDecoration: 'none' }}>
-                                <Card className="text-center h-100 p-2 shadow-sm border-0 category-card transition-shadow">
-                                    <Card.Body className="d-flex flex-column align-items-center justify-content-center">
-                                        <div className="category-icon-wrapper rounded-circle p-3 mb-2 border border-primary" style={{ backgroundColor: '#e0f0ff' }}>
-                                            <CategoryIcon name={category.icon} />
-                                        </div>
-                                        <div className="fw-semibold text-dark mb-1 small">{category.name}</div>
-                                        <div className="text-muted small">{category.count} việc làm</div>
-                                    </Card.Body>
-                                </Card>
-                            </Link>
-                        </Col>
-                    ))}
+                    {!loadingIndustries && industryCategories.length > 0 ? (
+                        industryCategories.map((category, index) => (
+                            <Col xs={6} sm={4} md={2} key={category.value}> 
+                                {/* Link sẽ chuyển hướng đến trang tìm kiếm với bộ lọc career=ID (category.value) */}
+                                <Link to={`/jobs/search?career=${category.value}`} style={{ textDecoration: 'none' }}>
+                                    <Card className="text-center h-100 p-2 shadow-sm border-0 category-card transition-shadow">
+                                        <Card.Body className="d-flex flex-column align-items-center justify-content-center">
+                                            <div className="category-icon-wrapper rounded-circle p-3 mb-2 border border-primary" style={{ backgroundColor: '#e0f0ff' }}>
+                                                {/* Vẫn sử dụng logic mock/fallback cho icon vì API danh mục không cung cấp icon */}
+                                                <CategoryIcon name={MOCK_CATEGORIES_FALLBACK[index % MOCK_CATEGORIES_FALLBACK.length]?.icon || 'briefcase'} /> 
+                                            </div>
+                                            <div className="fw-semibold text-dark mb-1 small">{category.label}</div>
+                                            {/* Số lượng việc làm: Dùng hàm mock tạm thời */}
+                                            <div className="text-muted small">{getMockJobCount(index)} việc làm</div>
+                                        </Card.Body>
+                                    </Card>
+                                </Link>
+                            </Col>
+                        ))
+                    ) : !loadingIndustries && (
+                         <Col><p className="text-center text-muted w-100">Không có ngành nghề nào được tìm thấy.</p></Col>
+                    )}
                 </Row>
             </Container>
             
@@ -316,12 +368,11 @@ export default function HomePage() {
                         Xem tất cả
                     </Link>
                 </div>
-                 
                 {errorEmployers && <div className="alert alert-danger text-center">{errorEmployers}</div>}
 
                 <Row className="g-3">
                     {loadingEmployers ? (
-                        <div className="text-center text-primary fw-semibold">Đang tải nhà tuyển dụng...</div>
+                        <div className="text-center text-primary fw-semibold"><Spinner animation="border" size="sm" className="me-2"/> Đang tải nhà tuyển dụng...</div>
                     ) : (
                         topEmployers.map((employer, index) => (
                             <Col xs={6} sm={4} md={3} key={employer.id || index}>

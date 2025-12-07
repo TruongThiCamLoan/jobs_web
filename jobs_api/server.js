@@ -19,7 +19,7 @@ db.sequelize.authenticate()
     console.log('✅ Kết nối MySQL thành công.');
     
     // 💡 SỬ DỤNG { alter: true } ĐỂ THÊM CỘT MỚI VÀO BẢNG ĐÃ CÓ (Job) VÀ TẠO BẢNG MỚI (Category)
-    db.sequelize.sync({ alter: true }).then(() => { 
+    db.sequelize.sync().then(() => { 
       console.log("✅ Database synchronized (Cột mới và bảng mới đã được thêm).");
     });
   })

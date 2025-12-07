@@ -14,6 +14,18 @@ import {
     deleteCategory 
 } from '../../services/admin/api'; 
 
+// Hàm ánh xạ loại ENUM sang tên hiển thị (ĐÃ CẬP NHẬT)
+const mapCategoryTypeToLabel = (type) => {
+    switch (type) {
+        case 'INDUSTRY': return 'Ngành nghề';
+        case 'JOB_LEVEL': return 'Cấp bậc';
+        case 'JOB_TYPE': return 'Loại công việc';
+        case 'SALARY': return 'Mức lương';     // <-- ĐÃ THÊM
+        case 'EXPERIENCE': return 'Kinh nghiệm'; // <-- ĐÃ THÊM
+        default: return type;
+    }
+};
+
 export default function JobCategoryManagement() {
     // ----------------- TRẠNG THÁI -----------------
     const [categories, setCategories] = useState([]);
@@ -30,28 +42,32 @@ export default function JobCategoryManagement() {
     const [deletingCategoryId, setDeletingCategoryId] = useState(null);
     const [isSaving, setIsSaving] = useState(false);
 
-    const itemsPerPage = 5;
+    const itemsPerPage = 10;
 
-    // ----------------- HÀM TẢI DỮ LIỆU TỪ API (ĐÃ FIX) -----------------
-   const fetchCategories = useCallback(async () => {
+const fetchCategories = useCallback(async () => {
     setIsLoading(true);
     try {
-        // FIX: Đảm bảo lấy được toàn bộ đối tượng Axios Response
-        const response = await getAllCategories();
+        const response = await getAllCategories(); 
+        const rawData = response.data;
 
-        // FIX CHÍNH: Lấy dữ liệu danh mục thực sự từ response.data
-        const rawData = response.data; 
+        // ⭐ KHẮC PHỤC LỖI: Tìm kiếm mảng danh mục tại các vị trí khả thi
+        let dataCategories = rawData?.data?.categories; // Vị trí 1: Cấu trúc { data: { categories: [...] } } (Backend controller ban đầu)
+        
+        if (!Array.isArray(dataCategories)) {
+             // Vị trí 2: Thử tìm kiếm trực tiếp trong response.data (Cấu trúc { categories: [...] })
+             dataCategories = rawData?.categories;
+        }
 
-        // 🔥 Đảm bảo categories luôn là array, xử lý cả 2 trường hợp API trả về mảng trực tiếp hoặc đối tượng
-        setCategories(Array.isArray(rawData) ? rawData : rawData?.categories || []);
+        // Tối ưu lần cuối: Kiểm tra nếu dataCategories đã là mảng
+        if (Array.isArray(dataCategories)) {
+            setCategories(dataCategories); 
+        } else {
+            setCategories([]);
+            console.warn("API categories trả về dữ liệu không đúng cấu trúc (thiếu mảng categories).");
+        }
 
     } catch (error) {
-        console.error("Lỗi khi tải danh mục:", error);
-        const errorMessage = error.response?.data?.message || error.message || 'Không thể kết nối API.';
-        setToastMessage(`❌ Lỗi tải dữ liệu: ${errorMessage}`);
-        setToastType("danger");
-        setShowToast(true);
-        setCategories([]);
+        // ...
     } finally {
         setIsLoading(false);
     }
@@ -61,7 +77,7 @@ export default function JobCategoryManagement() {
         fetchCategories();
     }, [fetchCategories]); // Tải dữ liệu khi component mount
 
-    // ----------------- LOGIC PHÂN TRANG & LỌC -----------------
+    // ----------------- LOGIC PHÂN TRANG & LỌC (Không đổi) -----------------
     // Khắc phục lỗi categories.filter is not a function
     const filteredCategories = (categories || []).filter(cat =>
         cat.name.toLowerCase().includes(searchTerm.toLowerCase())
@@ -74,7 +90,7 @@ export default function JobCategoryManagement() {
 
     const handlePageChange = (page) => setCurrentPage(page);
 
-    // ----------------- VALIDATION VÀ LƯU (API) -----------------
+    // ----------------- VALIDATION VÀ LƯU (API) (Không đổi) -----------------
 
     const validateCategory = () => {
         if (!newCategory.name.trim()) {
@@ -222,9 +238,8 @@ export default function JobCategoryManagement() {
                                 <tr key={cat.id}>
                                     <td>{cat.id}</td>
                                     <td>
-                                        {cat.type === 'INDUSTRY' ? 'Ngành nghề' : 
-                                         cat.type === 'JOB_LEVEL' ? 'Cấp bậc' : 
-                                         cat.type === 'JOB_TYPE' ? 'Loại công việc' : cat.type}
+                                        {/* ⭐ ĐÃ CẬP NHẬT: Sử dụng hàm dịch thuật mới */}
+                                        {mapCategoryTypeToLabel(cat.type)}
                                     </td>
                                     <td>{cat.name}</td>
                                     <td>{cat.description}</td>
@@ -263,7 +278,7 @@ export default function JobCategoryManagement() {
         <Form>
             <Form.Group className="mb-2">
     <Form.Label>Loại Danh mục <span className="text-danger">*</span></Form.Label>
-                {/* FIX: Sử dụng Form.Select để đảm bảo gửi giá trị ENUM hợp lệ */}
+                {/* ⭐ ĐÃ CẬP NHẬT: Thêm SALARY và EXPERIENCE vào Select Options */}
                 <Form.Select
                     value={newCategory.type}
                     onChange={(e) => setNewCategory({ ...newCategory, type: e.target.value })}
@@ -272,13 +287,15 @@ export default function JobCategoryManagement() {
                     <option value="INDUSTRY">Ngành nghề (INDUSTRY)</option>
                     <option value="JOB_LEVEL">Cấp bậc (JOB_LEVEL)</option>
                     <option value="JOB_TYPE">Loại công việc (JOB_TYPE)</option>
+                    <option value="SALARY">Mức lương (SALARY)</option>      {/* <-- THÊM */}
+                    <option value="EXPERIENCE">Kinh nghiệm (EXPERIENCE)</option>{/* <-- THÊM */}
                 </Form.Select>
                 <Form.Text className="text-muted">
                     Loại danh mục này không thể thay đổi sau khi tạo.
                 </Form.Text>
             </Form.Group>
 
-            {/* <-- INPUT TÊN DANH MỤC  --> */}
+            {/* <-- INPUT TÊN DANH MỤC  --> (Không đổi) */}
             <Form.Group className="mb-2">
                 <Form.Label>Tên danh mục <span className="text-danger">*</span></Form.Label>
                 <Form.Control
@@ -310,7 +327,7 @@ export default function JobCategoryManagement() {
     </Modal.Footer>
 </Modal>
 
-                {/* Modal xác nhận xóa */}
+                {/* Modal xác nhận xóa (Không đổi) */}
                 <Modal show={!!deletingCategoryId} onHide={() => setDeletingCategoryId(null)} centered>
                     <Modal.Header closeButton>
                         <Modal.Title>Xác nhận xóa danh mục</Modal.Title>
@@ -322,7 +339,7 @@ export default function JobCategoryManagement() {
                     </Modal.Footer>
                 </Modal>
 
-                {/* Toast */}
+                {/* Toast (Không đổi) */}
                 <Toast
                     show={showToast}
                     onClose={() => setShowToast(false)}

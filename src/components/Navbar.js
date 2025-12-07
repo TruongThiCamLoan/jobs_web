@@ -36,12 +36,12 @@ export default function AppNavbar() {
     // Logic kiểm tra đường dẫn để hiển thị thanh tìm kiếm
     const isMyJobs = location.pathname === "/myjobs";
     const isResume = location.pathname === "/resume";
-    const isAccount = location.pathname === "/account";
+    const isAccount = location.pathname.startsWith("/account");
     const isSavedJobs = location.pathname === "/saved-jobs";
     const isJobAlerts = location.pathname === "/job-alerts";
     const isAppliedJobs = location.pathname === "/applied-jobs";
     const isJobSearchPage = location.pathname === "/jobs/search";
-    const isJobDetailPage = location.pathname === "//jobs/:id";
+    const isJobDetailPage = location.pathname === "/jobs/:id";
     const isCreateResume = location.pathname.startsWith("/create-resume");
     
     const isMyCareerLinkSection =

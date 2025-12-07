@@ -1,11 +1,11 @@
-const { Sequelize } = require('sequelize'); // Sử dụng CommonJS cho Sequelize
-const Op = Sequelize.Op; // Lấy toán tử Op từ Sequelize
+const { Sequelize } = require('sequelize');
+const Op = Sequelize.Op;
 
 const db = require('../models');
 const Job = db.Job;
 const Employer = db.Employer; 
 const User = db.User;
-const Category = db.Category; // <-- BƯỚC SỬA: Import model Category
+const Category = db.Category; 
 
 // Danh sách các cột chi tiết cần lấy từ bảng Jobs
 const JOB_ATTRIBUTES = [
@@ -62,39 +62,55 @@ exports.createJob = async (req, res) => {
     }
 };
 
-// ----------------- Hàm Lấy Danh sách Job (Public - TÌM KIẾM & LỌC) -----------------
+// ----------------- Hàm Lấy Danh sách Job (Public - TÌM KIẾM & LỌC) - ĐÃ SỬA LỌC -----------------
 exports.getJobList = async (req, res) => {
-    // Lấy tham số search và location từ URL
-    const { search, location } = req.query; 
+    // ⭐ Lấy tất cả các tham số lọc từ Frontend
+    const { search, location, career, level, jobType } = req.query; 
 
     const where = {};
     
-    // Xử lý bộ lọc tìm kiếm (Search Term)
+    // 1. Xử lý bộ lọc tìm kiếm (Search Term)
     if (search) {
         const searchCondition = {
             [Op.or]: [
                 { title: { [Op.like]: `%${search}%` } },
                 { description: { [Op.like]: `%${search}%` } },
                 { requirements: { [Op.like]: `%${search}%` } },
-                // Lọc theo industryId (ID)
-                { industryId: { [Op.like]: `%${search}%` } },
             ]
         };
-        // Gán điều kiện tìm kiếm chung vào where
         Object.assign(where, searchCondition);
     }
 
-    // Xử lý bộ lọc địa điểm (Location)
+    // 2. Xử lý bộ lọc địa điểm (Location)
     if (location) {
-        // Thêm điều kiện location vào where
         where.location = { [Op.like]: `%${location}%` };
     }
+    
+    // ⭐ 3. XỬ LÝ LỌC THEO NGÀNH NGHỀ (Career -> industryId)
+    if (career) {
+        // 'career' là Category ID, lọc bằng khóa ngoại industryId
+        where.industryId = career; 
+    }
+
+    // ⭐ 4. XỬ LÝ LỌC THEO CẤP BẬC (Level -> jobLevelId)
+    if (level) {
+        // 'level' là Category ID, lọc bằng khóa ngoại jobLevelId
+        where.jobLevelId = level;
+    }
+
+    // ⭐ 5. XỬ LÝ LỌC THEO LOẠI CÔNG VIỆC (JobType -> jobTypeId)
+    if (jobType) {
+        // 'jobType' là Category ID, lọc bằng khóa ngoại jobTypeId
+        where.jobTypeId = jobType;
+    }
+    
+    // Ghi chú: Có thể thêm logic cho salary/experience nếu bạn sử dụng Category ID cho chúng
 
 
     try {
         const jobs = await Job.findAll({
-            where: where, // Áp dụng các điều kiện tìm kiếm
-            attributes: JOB_ATTRIBUTES, // Lấy tất cả các cột chi tiết
+            where: where, // Áp dụng TẤT CẢ các điều kiện
+            attributes: JOB_ATTRIBUTES,
             include: [
                 { 
                     model: Employer, 
@@ -104,8 +120,8 @@ exports.getJobList = async (req, res) => {
                 // BƯỚC SỬA: INCLUDE ASSOCIATIONS ĐỂ LẤY TÊN DANH MỤC
                 { 
                     model: Category, 
-                    as: 'industryCategory', // Bí danh từ db/index.js
-                    attributes: ['name'] // Chỉ lấy tên
+                    as: 'industryCategory', 
+                    attributes: ['name'] 
                 },
                 { 
                     model: Category, 
@@ -134,15 +150,13 @@ exports.getJobDetail = async (req, res) => {
 
     try {
         const job = await Job.findByPk(jobId, {
-            attributes: JOB_ATTRIBUTES, // Lấy tất cả các cột chi tiết (Đã được FIX ở trên)
+            attributes: JOB_ATTRIBUTES,
             include: [
                 { 
                     model: Employer, 
                     as: 'employer',
-                    // Thêm logoUrl và website vào thuộc tính Employer
                     attributes: ['companyName', 'companyDescription', 'companyAddress', 'phoneNumber', 'website', 'logoUrl'] 
                 },
-                // BƯỚC SỬA: INCLUDE ASSOCIATIONS ĐỂ LẤY TÊN DANH MỤC
                 { 
                     model: Category, 
                     as: 'industryCategory', 
@@ -165,7 +179,6 @@ exports.getJobDetail = async (req, res) => {
             return res.status(404).json({ message: 'Không tìm thấy bài đăng tuyển dụng.' });
         }
         
-        // Trả về kết quả JSON
         return res.status(200).json(job); 
     } catch (error) {
         console.error("Lỗi khi lấy chi tiết Job:", error);
@@ -176,7 +189,7 @@ exports.getJobDetail = async (req, res) => {
 // ----------------- Hàm Cập nhật Job (Protected) -----------------
 exports.updateJob = async (req, res) => {
     const jobId = req.params.id;
-    const userId = req.userId; // ID người dùng hiện tại từ JWT
+    const userId = req.userId;
 
     try {
         const job = await Job.findByPk(jobId, {
@@ -187,7 +200,6 @@ exports.updateJob = async (req, res) => {
             return res.status(404).send({ message: "Không tìm thấy bài đăng tuyển dụng." });
         }
 
-        // Kiểm tra quyền: Đảm bảo người dùng này là Employer và là người sở hữu Job
         const employerProfile = await Employer.findOne({ where: { userId: userId } });
         if (!employerProfile || employerProfile.employerId !== job.employerId) {
             return res.status(403).send({ message: "Bạn không có quyền chỉnh sửa bài đăng này." });
@@ -198,7 +210,6 @@ exports.updateJob = async (req, res) => {
         });
 
         if (updated) {
-            // Lấy lại Job với các thuộc tính cần thiết
             const updatedJob = await Job.findByPk(jobId, { attributes: JOB_ATTRIBUTES });
             return res.status(200).send({ message: "Cập nhật thành công!", job: updatedJob });
         }
@@ -214,7 +225,7 @@ exports.updateJob = async (req, res) => {
 // ----------------- Hàm Xóa Job (Protected) -----------------
 exports.deleteJob = async (req, res) => {
     const jobId = req.params.id;
-    const userId = req.userId; // ID người dùng hiện tại từ JWT
+    const userId = req.userId; 
 
     try {
         const job = await Job.findByPk(jobId);
@@ -222,7 +233,6 @@ exports.deleteJob = async (req, res) => {
             return res.status(404).send({ message: "Không tìm thấy bài đăng tuyển dụng để xóa." });
         }
 
-        // Kiểm tra quyền: Đảm bảo người dùng này là Employer và là người sở hữu Job
         const employerProfile = await Employer.findOne({ where: { userId: userId } });
         if (!employerProfile || employerProfile.employerId !== job.employerId) {
             return res.status(403).send({ message: "Bạn không có quyền xóa bài đăng này." });

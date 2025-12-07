@@ -69,6 +69,8 @@ export default function MyJobsPage() {
     const [isLoading, setIsLoading] = useState(true);
     const [error, setError] = useState(null);
 
+    const [resumeCount, setResumeCount] = useState(0); 
+
     const fetchProfile = useCallback(async () => {
         if (!authToken) {
             setIsLoading(false);
@@ -76,17 +78,35 @@ export default function MyJobsPage() {
         }
 
         try {
-            // CALL API GET PROFILE
-            const response = await axios.get("http://localhost:8080/api/profile", {
+            // --- 1. CALL API GET PROFILE (Thông tin chi tiết) ---
+            const profileResponse = await axios.get("http://localhost:8080/api/profile", {
                 headers: { Authorization: `Bearer ${authToken}` },
             });
             
-            const data = response.data;
+            const data = profileResponse.data;
             setProfile(data);
             
             const calculatedCompletion = calculateCompletionPercentage(data);
             setCompletion(calculatedCompletion);
-
+            
+            // --- 2. CALL API GET RESUMES (Lấy số lượng hồ sơ) ---
+            try {
+                const resumesResponse = await axios.get("http://localhost:8080/api/profile/resumes", {
+                    headers: { Authorization: `Bearer ${authToken}` },
+                });
+                // Nếu Back-end trả về mảng hồ sơ, lấy độ dài
+                setResumeCount(resumesResponse.data.length); 
+                
+            } catch (resumeError) {
+                 // Xử lý nếu API /resumes trả về 404/rỗng
+                if (resumeError.response?.status === 404 || resumeError.response?.status === 200 && resumeError.response.data.length === 0) {
+                     setResumeCount(0); 
+                } else {
+                     console.error("Lỗi khi tải số lượng hồ sơ:", resumeError);
+                     setResumeCount(0);
+                }
+            }
+            
         } catch (err) {
             console.error("Lỗi khi tải Profile:", err);
             if (err.response?.status === 404) {
@@ -135,22 +155,22 @@ export default function MyJobsPage() {
                           
                           {/* 2. HỒ SƠ XIN VIỆC (ĐANG ACTIVE LÀ MỤC CON: Tải hồ sơ lên) */}
                           <Nav.Link as={Link} to="/resume" className="text-dark py-1">
-                              <FileText size={14} className="me-1" /> Hồ sơ xin việc (0)
+                              <FileText size={14} className="me-1" /> Hồ sơ xin việc ({resumeCount})
                           </Nav.Link>
   
                           {/* 3. VIỆC ĐÃ LƯU */}
                           <Nav.Link as={Link} to="/saved-jobs" className="text-dark py-1">
-                              <Heart size={14} className="me-1" /> Việc đã lưu (0)
+                              <Heart size={14} className="me-1" /> Việc đã lưu 
                           </Nav.Link>
                           
                           {/* 4. VIỆC ĐÃ ỨNG TUYỂN */}
                           <Nav.Link as={Link} to="/applied-jobs" className="text-dark py-1">
-                              <Briefcase size={14} className="me-1" /> Việc đã ứng tuyển (0)
+                              <Briefcase size={14} className="me-1" /> Việc đã ứng tuyển 
                           </Nav.Link>
                           
                            {/* 5. THÔNG BÁO VIỆC LÀM */}
                           <Nav.Link as={Link} to="/job-alerts" className="text-dark py-1">
-                              <Bell size={14} className="me-1" /> Thông báo việc làm (0)
+                              <Bell size={14} className="me-1" /> Thông báo việc làm 
                           </Nav.Link>
                           
                            {/* 6. TÀI KHOẢN */}

@@ -30,4 +30,17 @@ router.post(
     applicationController.createApplication
 );
 
+router.get(
+    '/employer',
+    [authJwt.verifyToken, authJwt.isRecruiter], 
+    applicationController.getEmployerCandidates
+);
+
+// 🎯 BỔ SUNG: PUT /api/applications/:id/status -> Cập nhật trạng thái đơn ứng tuyển (Duyệt/Từ chối)
+router.put(
+    '/:id/status',
+    [authJwt.verifyToken, authJwt.isRecruiter], 
+    applicationController.updateApplicationStatus
+);
+
 module.exports = router;
